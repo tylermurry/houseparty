@@ -1,0 +1,4 @@
+/.idea/**
+/frontend/obj/**
+/HouseParty.AppHost/obj/**
+/HouseParty.Server/obj/**
