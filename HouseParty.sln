@@ -6,7 +6,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HouseParty.AppHost", "House
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HouseParty.Server", "HouseParty.Server\HouseParty.Server.csproj", "{613A57CF-6484-4373-A6D1-8B376FA5F90A}"
 EndProject
-Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "frontend", "frontend\frontend.esproj", "{C1D3ED22-7904-4564-9D5F-9A1571C5D9F9}"
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "frontend", "frontend\frontend.esproj", "{B86E16DE-0BD1-4D07-9427-B352BBDE5C11}"
 EndProject
 
 Global
@@ -23,11 +23,11 @@ Global
 		{613A57CF-6484-4373-A6D1-8B376FA5F90A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{613A57CF-6484-4373-A6D1-8B376FA5F90A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{613A57CF-6484-4373-A6D1-8B376FA5F90A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C1D3ED22-7904-4564-9D5F-9A1571C5D9F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C1D3ED22-7904-4564-9D5F-9A1571C5D9F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C1D3ED22-7904-4564-9D5F-9A1571C5D9F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C1D3ED22-7904-4564-9D5F-9A1571C5D9F9}.Release|Any CPU.Build.0 = Release|Any CPU
 
+		{B86E16DE-0BD1-4D07-9427-B352BBDE5C11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B86E16DE-0BD1-4D07-9427-B352BBDE5C11}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B86E16DE-0BD1-4D07-9427-B352BBDE5C11}.Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{B86E16DE-0BD1-4D07-9427-B352BBDE5C11}.Release|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
