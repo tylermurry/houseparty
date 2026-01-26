@@ -1,6 +1,6 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var cache = builder.AddRedis("cache");
+var cache = builder.AddRedis("cache").WithRedisInsight();
 
 var server = builder.AddProject<Projects.HouseParty_Server>("server")
     .WithReference(cache)

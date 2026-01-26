@@ -1,0 +1,6 @@
+@HouseParty.WebsocketServer_HostAddress = http://localhost:5023
+
+GET {{HouseParty.WebsocketServer_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

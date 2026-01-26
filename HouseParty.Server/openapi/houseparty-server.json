@@ -1,0 +1,66 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "HouseParty.Server | v1",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/person": {
+      "post": {
+        "tags": [
+          "HouseParty.Server"
+        ],
+        "operationId": "SavePerson",
+        "parameters": [
+          {
+            "name": "firstName",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "lastName",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "HouseParty.Server"
+        ],
+        "operationId": "GetPerson",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "HouseParty.Server"
+    }
+  ]
+}

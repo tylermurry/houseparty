@@ -1,53 +1,65 @@
+using HouseParty.Common;
+using StackExchange.Redis;
+using System.Text.Json;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add service defaults & Aspire client integrations.
 builder.AddServiceDefaults();
-builder.AddRedisClientBuilder("cache")
-    .WithOutputCache();
-
-// Add services to the container.
 builder.Services.AddProblemDetails();
-
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.AddRedisClient("cache");
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("frontend", policy =>
+    {
+        if (builder.Environment.IsDevelopment())
+        {
+            policy.AllowAnyOrigin()
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+            return;
+        }
+
+        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+        if (allowedOrigins is { Length: > 0 })
+        {
+            policy.WithOrigins(allowedOrigins)
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        }
+    });
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 app.UseExceptionHandler();
+app.UseCors("frontend");
 
 if (app.Environment.IsDevelopment())
-{
     app.MapOpenApi();
-}
-
-app.UseOutputCache();
-
-string[] summaries = ["Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"];
 
 var api = app.MapGroup("/api");
-api.MapGet("weatherforecast", () =>
+
+api.MapPost("person", async (string firstName, string lastName, IConnectionMultiplexer redis) =>
 {
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
+    var person = new Person(Guid.NewGuid().ToString("n"), firstName, lastName);
+    await redis.GetDatabase().StringSetAsync(person.id, JsonSerializer.Serialize(person));
+
+    return Results.Created($"/api/person?id={person.id}", person);
 })
-.CacheOutput(p => p.Expire(TimeSpan.FromSeconds(5)))
-.WithName("GetWeatherForecast");
+.WithName("SavePerson");
+
+api.MapGet("person", async (string id, IConnectionMultiplexer redis) =>
+{
+    var payload = await redis.GetDatabase().StringGetAsync(id);
+    if (payload.IsNullOrEmpty)
+        return Results.NotFound();
+
+    var person = JsonSerializer.Deserialize<Person>(payload!.ToString());
+    return person is null ? Results.NotFound() : Results.Ok(person);
+})
+.WithName("GetPerson");
 
 app.MapDefaultEndpoints();
-
 app.UseFileServer();
-
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

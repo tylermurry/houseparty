@@ -1,6 +1,12 @@
 @Server_HostAddress = http://localhost:5407
 
-GET {{Server_HostAddress}}/api/weatherforecast/
+POST {{Server_HostAddress}}/api/person?firstName=Taylor&lastName=Smith
+Accept: application/json
+
+###
+
+@PersonId = 22442b18824d4f8c8ea72318937a2885
+GET {{Server_HostAddress}}/api/person?id={{PersonId}}
 Accept: application/json
 
 ###
