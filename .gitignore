@@ -1,7 +1,7 @@
 /.idea/**
+/.tools/**
 /frontend/obj/**
 /HouseParty.AppHost/obj/**
 /HouseParty.AppHost/bin/**
 /HouseParty.Server/obj/**
 /HouseParty.Server/bin/**
-/.tools/**

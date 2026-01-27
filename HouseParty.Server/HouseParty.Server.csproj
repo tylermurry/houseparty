@@ -28,19 +28,11 @@
     <Folder Include="openapi\" />
   </ItemGroup>
 
-  <!-- Typescript Client Generation -->
+  <!-- OpenAPI Spec Generation: This is picked up by the frontend to generate a client so calls and types are in-sync -->
   <PropertyGroup>
     <OpenApiGenerateDocuments>true</OpenApiGenerateDocuments>
     <OpenApiDocumentsDirectory>$(MSBuildProjectDirectory)/openapi</OpenApiDocumentsDirectory>
     <OpenApiGenerateDocumentsOptions>--file-name houseparty-server</OpenApiGenerateDocumentsOptions>
   </PropertyGroup>
-  
-  <Target Name="GenerateTypeScriptClient"
-          AfterTargets="GenerateOpenApiDocuments"
-          Condition="'$(Configuration)' == 'Debug'">
-
-    <Exec Command="dotnet tool restore" />
-    <Exec Command="dotnet kiota generate -l typescript -d openapi/houseparty-server.json -c HousePartyServerClient -o ../frontend/src/api-client" />
-  </Target>
 
 </Project>

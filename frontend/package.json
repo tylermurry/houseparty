@@ -4,7 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "gen:api": "openapi-ts -i ../HouseParty.Server/openapi/houseparty-server.json -o src/api-client/client",
+    "predev:": "npm run gen:api",
     "dev": "vite",
+    "prebuild": "npm run gen:api",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
@@ -14,16 +17,12 @@
   },
   "dependencies": {
     "@microsoft/signalr": "^8.0.7",
-    "@microsoft/kiota-http-fetchlibrary": "^1.0.0-preview.99",
-    "@microsoft/kiota-serialization-form": "^1.0.0-preview.99",
-    "@microsoft/kiota-serialization-json": "^1.0.0-preview.99",
-    "@microsoft/kiota-serialization-multipart": "^1.0.0-preview.99",
-    "@microsoft/kiota-serialization-text": "^1.0.0-preview.99",
     "pinia": "^3.0.4",
     "vue": "^3.5.26",
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
+    "@hey-api/openapi-ts": "0.90.10",
     "@tsconfig/node24": "^24.0.4",
     "@types/node": "^24.10.9",
     "@vitejs/plugin-vue": "^6.0.3",

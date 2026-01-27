@@ -1,28 +1,23 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { AnonymousAuthenticationProvider } from '@microsoft/kiota-abstractions'
-import { FetchRequestAdapter } from '@microsoft/kiota-http-fetchlibrary'
-import { createHousePartyServerClient } from '../api-client/housePartyServerClient'
+import API from '@/api-client/client';
 
 const router = useRouter()
 const isBusy = ref(false)
 const status = ref('')
 
-const requestAdapter = new FetchRequestAdapter(new AnonymousAuthenticationProvider())
-requestAdapter.baseUrl = import.meta.env.VITE_BACKEND_API_URL
-const apiClient = createHousePartyServerClient(requestAdapter)
 
 async function createRoom() {
   status.value = ''
   try {
     isBusy.value = true
-    const room = await apiClient.api.rooms.post()
-    if (!room?.id) {
+    const room = await API.postApiRooms()
+    if (!room.data?.id) {
       status.value = 'Failed to create room.'
       return
     }
-    await router.push(`/room/${room.id}`)
+    await router.push(`/room/${room.data.id}`)
   } catch (error) {
     status.value = 'Failed to create room.'
     console.error(error)

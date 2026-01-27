@@ -1,14 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import {
-  AnonymousAuthenticationProvider,
-  isUntypedNumber,
-  type UntypedNode,
-} from '@microsoft/kiota-abstractions'
-import { FetchRequestAdapter } from '@microsoft/kiota-http-fetchlibrary'
 import { HubConnectionBuilder, type HubConnection } from '@microsoft/signalr'
-import { createHousePartyServerClient } from '../api-client/housePartyServerClient'
+import API from '@/api-client/client';
 
 const route = useRoute()
 const router = useRouter()
@@ -19,37 +13,21 @@ const isConnecting = ref(true)
 const connectionError = ref('')
 let connection: HubConnection | null = null
 
-const requestAdapter = new FetchRequestAdapter(new AnonymousAuthenticationProvider())
-requestAdapter.baseUrl = import.meta.env.VITE_BACKEND_API_URL
-const apiClient = createHousePartyServerClient(requestAdapter)
-
 function leaveRoom() {
   router.push('/')
 }
 
 async function negotiateConnection() {
-  const response = await apiClient.api.signalr.negotiate.post()
-  if (!response?.url || !response?.accessToken) {
+  const response = await API.postApiSignalrNegotiate()
+  if (!response.data?.url || !response.data?.accessToken) {
     throw new Error('Failed to negotiate SignalR connection.')
   }
   return response
 }
 
-function readCounterValue(counter?: UntypedNode | null) {
-  if (!counter) return undefined
-  if (isUntypedNumber(counter)) return counter.getValue()
-  const value = counter.getValue?.()
-  if (typeof value === 'number') return value
-  if (typeof counter.value === 'number') return counter.value
-  return undefined
-}
-
 async function joinRoom(connectionId: string) {
-  const payload = await apiClient.api.rooms.byRoomId(roomId.value).join.post({ connectionId })
-  const nextCounter = readCounterValue(payload?.counter ?? undefined)
-  if (typeof nextCounter === 'number') {
-    count.value = nextCounter
-  }
+  const payload = await API.postApiRoomsByRoomIdJoin({ path: { roomId: roomId.value }, body: { connectionId } });
+  count.value = payload.data?.counter as number
 }
 
 async function startConnection() {
@@ -59,8 +37,8 @@ async function startConnection() {
   const negotiation = await negotiateConnection()
 
   connection = new HubConnectionBuilder()
-    .withUrl(negotiation.url, {
-      accessTokenFactory: () => negotiation.accessToken,
+    .withUrl(negotiation.data.url, {
+      accessTokenFactory: () => negotiation.data.accessToken,
     })
     .withAutomaticReconnect()
     .build()
@@ -98,11 +76,8 @@ async function startConnection() {
 async function incrementCounter() {
   if (!connection || !isConnected.value) return
   try {
-    const payload = await apiClient.api.rooms.byRoomId(roomId.value).increment.post()
-    const nextCounter = readCounterValue(payload?.counter ?? undefined)
-    if (typeof nextCounter === 'number') {
-      count.value = nextCounter
-    }
+    const payload = await API.postApiRoomsByRoomIdIncrement({ path: { roomId: roomId.value }})
+    count.value = payload.data?.counter as number
   } catch (error) {
     connectionError.value = error instanceof Error ? error.message : 'Failed to increment.'
   }
