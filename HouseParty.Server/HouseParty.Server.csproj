@@ -27,10 +27,6 @@
     <Folder Include="openapi\" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\HouseParty.Common\HouseParty.Common.csproj" />
-  </ItemGroup>
-
   <!-- Typescript Client Generation -->
   <PropertyGroup>
     <OpenApiGenerateDocuments>true</OpenApiGenerateDocuments>

@@ -8,8 +8,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HouseParty.Server", "HouseP
 EndProject
 Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "frontend", "frontend\frontend.esproj", "{B86E16DE-0BD1-4D07-9427-B352BBDE5C11}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseParty.Common", "HouseParty.Common\HouseParty.Common.csproj", "{D7D8043B-EC50-42F9-9E8D-9F4DF408C59F}"
-EndProject
 
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,10 +28,6 @@ Global
 		{B86E16DE-0BD1-4D07-9427-B352BBDE5C11}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B86E16DE-0BD1-4D07-9427-B352BBDE5C11}.Release|Any CPU.ActiveCfg = Debug|Any CPU
 		{B86E16DE-0BD1-4D07-9427-B352BBDE5C11}.Release|Any CPU.Build.0 = Debug|Any CPU
-		{D7D8043B-EC50-42F9-9E8D-9F4DF408C59F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D7D8043B-EC50-42F9-9E8D-9F4DF408C59F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D7D8043B-EC50-42F9-9E8D-9F4DF408C59F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D7D8043B-EC50-42F9-9E8D-9F4DF408C59F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
