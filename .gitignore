@@ -1,6 +1,7 @@
 /.idea/**
 /.tools/**
 /frontend/obj/**
+/frontend/.eslintcache
 /HouseParty.AppHost/obj/**
 /HouseParty.AppHost/bin/**
 /HouseParty.Server/obj/**

@@ -5,12 +5,10 @@
   "type": "module",
   "scripts": {
     "gen:api": "openapi-ts -i ../HouseParty.Server/openapi/houseparty-server.json -o src/api-client/client",
-    "predev:": "npm run gen:api",
+    "predev": "run-s gen:api lint type-check",
     "dev": "vite",
-    "prebuild": "npm run gen:api",
-    "build": "run-p type-check \"build-only {@}\" --",
-    "preview": "vite preview",
-    "build-only": "vite build",
+    "pre-build": "run-s gen:api lint type-check type-check \"build-only {@}\" --",
+    "build": "vite build",
     "type-check": "vue-tsc --build",
     "lint": "eslint . --fix --cache",
     "format": "prettier --write --experimental-cli src/"
