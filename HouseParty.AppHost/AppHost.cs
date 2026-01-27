@@ -12,6 +12,7 @@ if (builder.Environment.IsDevelopment())
 
 var backend = builder.AddProject<Projects.HouseParty_Server>("backend")
     .WithReference(cache)
+    .WithReference(signalr)
     .WaitFor(cache)
     .WithHttpHealthCheck("/health")
     .WithExternalHttpEndpoints();

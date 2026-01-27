@@ -13,6 +13,7 @@
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
+    "@microsoft/signalr": "^8.0.7",
     "@microsoft/kiota-http-fetchlibrary": "^1.0.0-preview.99",
     "@microsoft/kiota-serialization-form": "^1.0.0-preview.99",
     "@microsoft/kiota-serialization-json": "^1.0.0-preview.99",

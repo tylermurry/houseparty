@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="Aspire.StackExchange.Redis.OutputCaching" Version="13.1.0" />
     <PackageReference Include="Aspire.Azure.Messaging.WebPubSub" Version="13.1.0" />
+    <PackageReference Include="Microsoft.Azure.SignalR.Management" Version="1.32.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.1" />    
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.1.0" />
     <PackageReference Include="Microsoft.Extensions.ServiceDiscovery" Version="10.1.0" />    

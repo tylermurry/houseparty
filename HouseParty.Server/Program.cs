@@ -1,4 +1,5 @@
 using HouseParty.Server.Services;
+using Microsoft.Azure.SignalR.Management;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +10,7 @@ builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddSingleton<RoomService>();
+builder.Services.AddSingleton<RoomSignalRService>();
 
 builder.Services.AddCors(options =>
 {
@@ -18,6 +20,13 @@ builder.Services.AddCors(options =>
         policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
     });
 });
+
+// Serverless SignalR Setup
+builder.Services.AddSingleton<IServiceManager>(_ =>
+    (IServiceManager) new ServiceManagerBuilder()
+        .WithOptions(options => options.ConnectionString = builder.Configuration.GetConnectionString("signalr"))
+        .BuildServiceManager()
+    );
 
 var app = builder.Build();
 

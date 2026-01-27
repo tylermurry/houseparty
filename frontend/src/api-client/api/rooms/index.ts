@@ -4,12 +4,20 @@
 // @ts-ignore
 import { createRoomCreatedFromDiscriminatorValue, type RoomCreated } from '../../models/index.js';
 // @ts-ignore
-import { type BaseRequestBuilder, type Parsable, type ParsableFactory, type RequestConfiguration, type RequestInformation, type RequestsMetadata } from '@microsoft/kiota-abstractions';
+import { type WithRoomItemRequestBuilder, WithRoomItemRequestBuilderNavigationMetadata } from './item/index.js';
+// @ts-ignore
+import { type BaseRequestBuilder, type KeysToExcludeForNavigationMetadata, type NavigationMetadata, type Parsable, type ParsableFactory, type RequestConfiguration, type RequestInformation, type RequestsMetadata } from '@microsoft/kiota-abstractions';
 
 /**
  * Builds and executes requests for operations under /api/rooms
  */
 export interface RoomsRequestBuilder extends BaseRequestBuilder<RoomsRequestBuilder> {
+    /**
+     * Gets an item from the ApiSdk.api.rooms.item collection
+     * @param roomId Unique identifier of the item
+     * @returns {WithRoomItemRequestBuilder}
+     */
+     byRoomId(roomId: string) : WithRoomItemRequestBuilder;
     /**
      * @param requestConfiguration Configuration for the request such as headers, query parameters, and middleware options.
      * @returns {Promise<RoomCreated>}
@@ -25,6 +33,15 @@ export interface RoomsRequestBuilder extends BaseRequestBuilder<RoomsRequestBuil
  * Uri template for the request builder.
  */
 export const RoomsRequestBuilderUriTemplate = "{+baseurl}/api/rooms";
+/**
+ * Metadata for all the navigation properties in the request builder.
+ */
+export const RoomsRequestBuilderNavigationMetadata: Record<Exclude<keyof RoomsRequestBuilder, KeysToExcludeForNavigationMetadata>, NavigationMetadata> = {
+    byRoomId: {
+        navigationMetadata: WithRoomItemRequestBuilderNavigationMetadata,
+        pathParametersMappings: ["roomId"],
+    },
+};
 /**
  * Metadata for all the requests in the request builder.
  */
