@@ -5,54 +5,46 @@
     "version": "1.0.0"
   },
   "paths": {
-    "/api/person": {
+    "/api/rooms": {
       "post": {
         "tags": [
-          "HouseParty.Server"
-        ],
-        "operationId": "SavePerson",
-        "parameters": [
-          {
-            "name": "firstName",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "lastName",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
+          "Rooms"
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomCreated"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomCreated"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomCreated"
+                }
+              }
+            }
           }
         }
-      },
-      "get": {
-        "tags": [
-          "HouseParty.Server"
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RoomCreated": {
+        "required": [
+          "id"
         ],
-        "operationId": "GetPerson",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
           }
         }
       }
@@ -60,7 +52,7 @@
   },
   "tags": [
     {
-      "name": "HouseParty.Server"
+      "name": "Rooms"
     }
   ]
 }

@@ -1,17 +1,26 @@
+using Microsoft.Extensions.Hosting;
+
 var builder = DistributedApplication.CreateBuilder(args);
 
 var cache = builder.AddRedis("cache").WithRedisInsight();
+var signalr = builder.AddAzureSignalR("signalr");
 
-var server = builder.AddProject<Projects.HouseParty_Server>("server")
+if (builder.Environment.IsDevelopment())
+{
+    signalr.RunAsEmulator();
+}
+
+var backend = builder.AddProject<Projects.HouseParty_Server>("backend")
     .WithReference(cache)
     .WaitFor(cache)
     .WithHttpHealthCheck("/health")
     .WithExternalHttpEndpoints();
 
-var webfrontend = builder.AddViteApp("webfrontend", "../frontend")
-    .WithReference(server)
-    .WaitFor(server);
+var frontend = builder.AddViteApp("frontend", "../frontend")
+    .WithReference(backend)
+    .WithEnvironment("VITE_BACKEND_API_URL", backend.GetEndpoint("http"))
+    .WaitFor(backend);
 
-server.PublishWithContainerFiles(webfrontend, "wwwroot");
+backend.PublishWithContainerFiles(frontend, "wwwroot");
 
 builder.Build().Run();

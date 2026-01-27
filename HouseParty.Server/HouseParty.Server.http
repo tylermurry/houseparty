@@ -1,12 +1,7 @@
 @Server_HostAddress = http://localhost:5407
 
-POST {{Server_HostAddress}}/api/person?firstName=Taylor&lastName=Smith
+POST {{Server_HostAddress}}/api/rooms
 Accept: application/json
 
 ###
-
-@PersonId = 22442b18824d4f8c8ea72318937a2885
-GET {{Server_HostAddress}}/api/person?id={{PersonId}}
-Accept: application/json
-
-###
+### WebSocket: ws://localhost:5023/api/rooms/{room-id}/ws
