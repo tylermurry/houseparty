@@ -2,12 +2,13 @@ using Microsoft.Extensions.Hosting;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-var cache = builder.AddRedis("cache").WithRedisInsight();
+var cache = builder.AddRedis("cache");
 var signalr = builder.AddAzureSignalR("signalr");
 
 if (builder.Environment.IsDevelopment())
 {
     signalr.RunAsEmulator();
+    cache.WithRedisInsight();
 }
 
 var backend = builder.AddProject<Projects.HouseParty_Server>("backend")

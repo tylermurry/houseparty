@@ -1,0 +1,71 @@
+/* ----------- COLORS ----------- */
+
+:root {
+    --color-primary: #F62F54;
+    --color-player-1: var(--color-primary);
+    --color-player-2: #FF7F0E;
+    --color-player-3: #2CA02C;
+    --color-player-4: #F5CB00;
+    --color-player-5: #9467BD;
+    --color-player-6: #8C564B;
+    --color-player-7: #E377C2;
+    --color-player-8: #7F7F7F;
+    --color-player-9: #BCBD22;
+    --color-player-10: #17BECF;
+    --color-player-11: #ec7087;
+    --color-player-12: #FFBB78;
+    --color-player-13: #98DF8A;
+    --color-player-14: #e3d697;
+    --color-player-15: #C5B0D5;
+    --color-player-16: #C49C94;
+    --color-player-17: #F7B6D2;
+    --color-player-18: #C7C7C7;
+    --color-player-19: #DBDB8D;
+    --color-player-20: #9EDAE5;
+}
+
+/* ----------- TYPOGRAPHY ----------- */
+
+* {
+    color: white;
+    font-family: "Press Start 2P", system-ui;
+}
+
+/* ----------- CURSOR ----------- */
+
+body,
+button,
+a,
+input,
+textarea,
+select {
+    cursor: none;
+}
+
+.custom-cursor {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 34px;
+    height: 46px;
+    background-image: url('../images/hand.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+/* ----------- BUTTONS ----------- */
+
+button {
+    background-color: var(--color-primary);
+    padding: 15px 40px 15px 40px;
+    margin: 10px;
+    border: 0;
+    box-shadow: 0px 5px white, 0px -5px white, 5px 0px white, -5px 0px white, 0px 10px #00000038, 5px 5px #00000038, -5px 5px #00000038, inset 0px 5px #ffffff36 ;
+}
+
+button:active {
+    transform: translateY(5px);
+    box-shadow: 0px 5px white, 0px -5px white, 5px 0px white, -5px 0px white,inset 0px 5px #00000038;
+}
