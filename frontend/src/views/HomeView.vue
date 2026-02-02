@@ -18,7 +18,7 @@ async function createRoom() {
       status.value = 'Failed to create room.'
       return
     }
-    await router.push(`/room/${room.data.id}`)
+    router.push(`/room/${room.data.id}`)
   } catch (error) {
     status.value = 'Failed to create room.'
     console.error(error)

@@ -4,20 +4,24 @@ export type ClientOptions = {
     baseUrl: `${string}://${string}` | (string & {});
 };
 
-export type RoomCounterUpdated = {
-    counter: number | string;
-};
-
 export type RoomCreated = {
     id: string;
 };
 
 export type RoomJoined = {
-    counter: number | string;
+    player: RoomPlayer;
+    players: Array<RoomPlayer>;
 };
 
 export type RoomJoinRequest = {
     connectionId: string;
+    name: string;
+    playerNumber?: null | number | string;
+};
+
+export type RoomPlayer = {
+    number: number | string;
+    name: string;
 };
 
 export type SignalRNegotiation = {
@@ -58,24 +62,6 @@ export type PostApiRoomsByRoomIdJoinResponses = {
 };
 
 export type PostApiRoomsByRoomIdJoinResponse = PostApiRoomsByRoomIdJoinResponses[keyof PostApiRoomsByRoomIdJoinResponses];
-
-export type PostApiRoomsByRoomIdIncrementData = {
-    body?: never;
-    path: {
-        roomId: string;
-    };
-    query?: never;
-    url: '/api/rooms/{roomId}/increment';
-};
-
-export type PostApiRoomsByRoomIdIncrementResponses = {
-    /**
-     * OK
-     */
-    200: RoomCounterUpdated;
-};
-
-export type PostApiRoomsByRoomIdIncrementResponse = PostApiRoomsByRoomIdIncrementResponses[keyof PostApiRoomsByRoomIdIncrementResponses];
 
 export type PostApiSignalrNegotiateData = {
     body?: never;

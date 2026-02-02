@@ -25,19 +25,15 @@ public sealed class RoomsController(RoomService service, RoomSignalRService sign
             return BadRequest("ConnectionId is required.");
         }
 
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            return BadRequest("Name is required.");
+        }
+
         await signalR.AddToRoomAsync(roomId, request.ConnectionId, cancellationToken);
-        var count = await service.GetCounterAsync(roomId);
-        await signalR.SendCounterToConnectionAsync(request.ConnectionId, count, cancellationToken);
+        var joinResult = await service.JoinRoomAsync(roomId, request.Name, request.PlayerNumber);
+        await signalR.BroadcastPlayersAsync(roomId, joinResult.Players, cancellationToken);
 
-        return Ok(new RoomJoined(count));
-    }
-
-    [HttpPost("{roomId}/increment")]
-    public async Task<ActionResult<RoomCounterUpdated>> IncrementRoom(string roomId, CancellationToken cancellationToken)
-    {
-        var count = await service.IncrementCounterAsync(roomId);
-        await signalR.BroadcastCounterAsync(roomId, count, cancellationToken);
-
-        return Ok(new RoomCounterUpdated(count));
+        return Ok(new RoomJoined(joinResult.Player, joinResult.Players));
     }
 }

@@ -42,6 +42,13 @@ select {
     cursor: none;
 }
 
+input,
+textarea,
+select {
+    color: #000000;
+    caret-color: #000000;
+}
+
 .custom-cursor {
     position: fixed;
     top: 0;

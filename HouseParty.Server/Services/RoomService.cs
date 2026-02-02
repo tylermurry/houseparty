@@ -1,4 +1,3 @@
-using System.Text.Json;
 using HouseParty.Server.Models;
 using StackExchange.Redis;
 
@@ -11,28 +10,63 @@ public sealed class RoomService(IConnectionMultiplexer redis)
     public async Task CreateRoomAsync(string roomId)
     {
         var db = redis.GetDatabase();
-        var payload = JsonSerializer.Serialize(new RoomStatePayload(roomId, 0));
-
-        await db.StringSetAsync(RoomKey(roomId), payload, RoomTtl);
-        await db.StringSetAsync(CounterKey(roomId), 0, RoomTtl);
+        await db.StringSetAsync(PlayerNumberKey(roomId), 0, RoomTtl);
     }
 
-    private static string RoomKey(string roomId) => $"room:{roomId}";
+    private static string PlayerNumberKey(string roomId) => $"room:{roomId}:players:next";
 
-    private static string CounterKey(string roomId) => $"room:{roomId}:counter";
+    private static string PlayersKey(string roomId) => $"room:{roomId}:players";
 
-    public async Task<int> GetCounterAsync(string roomId)
+    public async Task<(RoomPlayer Player, IReadOnlyList<RoomPlayer> Players)> JoinRoomAsync(string roomId, string name, int? playerNumber)
     {
         var db = redis.GetDatabase();
-        var value = await db.StringGetAsync(CounterKey(roomId));
-        return value.HasValue && int.TryParse(value.ToString(), out var count) ? count : 0;
+        var trimmedName = name.Trim();
+        var assignedNumber = await ResolvePlayerNumberAsync(db, roomId, playerNumber);
+
+        await db.HashSetAsync(PlayersKey(roomId), assignedNumber, trimmedName);
+        await RefreshRoomTtlAsync(db, roomId);
+
+        var players = await GetPlayersAsync(db, roomId);
+        return (new RoomPlayer(assignedNumber, trimmedName), players);
     }
 
-    public async Task<int> IncrementCounterAsync(string roomId)
+    private static async Task<int> ResolvePlayerNumberAsync(IDatabase db, string roomId, int? playerNumber)
     {
-        var db = redis.GetDatabase();
-        var newValue = await db.StringIncrementAsync(CounterKey(roomId));
-        await db.KeyExpireAsync(CounterKey(roomId), RoomTtl);
+        if (playerNumber is > 0)
+        {
+            var existing = await db.HashGetAsync(PlayersKey(roomId), playerNumber.Value);
+            if (existing.HasValue)
+            {
+                return playerNumber.Value;
+            }
+        }
+
+        var newValue = await db.StringIncrementAsync(PlayerNumberKey(roomId));
         return (int)newValue;
+    }
+
+    private static async Task<IReadOnlyList<RoomPlayer>> GetPlayersAsync(IDatabase db, string roomId)
+    {
+        var entries = await db.HashGetAllAsync(PlayersKey(roomId));
+        var players = new List<RoomPlayer>(entries.Length);
+
+        foreach (var entry in entries)
+        {
+            if (!int.TryParse(entry.Name.ToString(), out var number))
+            {
+                continue;
+            }
+
+            players.Add(new RoomPlayer(number, entry.Value.ToString()));
+        }
+
+        players.Sort((left, right) => left.Number.CompareTo(right.Number));
+        return players;
+    }
+
+    private static async Task RefreshRoomTtlAsync(IDatabase db, string roomId)
+    {
+        await db.KeyExpireAsync(PlayerNumberKey(roomId), RoomTtl);
+        await db.KeyExpireAsync(PlayersKey(roomId), RoomTtl);
     }
 }

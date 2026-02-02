@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { PostApiRoomsByRoomIdIncrementData, PostApiRoomsByRoomIdIncrementResponses, PostApiRoomsByRoomIdJoinData, PostApiRoomsByRoomIdJoinResponses, PostApiRoomsData, PostApiRoomsResponses, PostApiSignalrNegotiateData, PostApiSignalrNegotiateResponses } from './types.gen';
+import type { PostApiRoomsByRoomIdJoinData, PostApiRoomsByRoomIdJoinResponses, PostApiRoomsData, PostApiRoomsResponses, PostApiSignalrNegotiateData, PostApiSignalrNegotiateResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -28,7 +28,5 @@ export const postApiRoomsByRoomIdJoin = <ThrowOnError extends boolean = false>(o
         ...options.headers
     }
 });
-
-export const postApiRoomsByRoomIdIncrement = <ThrowOnError extends boolean = false>(options: Options<PostApiRoomsByRoomIdIncrementData, ThrowOnError>) => (options.client ?? client).post<PostApiRoomsByRoomIdIncrementResponses, unknown, ThrowOnError>({ url: '/api/rooms/{roomId}/increment', ...options });
 
 export const postApiSignalrNegotiate = <ThrowOnError extends boolean = false>(options?: Options<PostApiSignalrNegotiateData, ThrowOnError>) => (options?.client ?? client).post<PostApiSignalrNegotiateResponses, unknown, ThrowOnError>({ url: '/api/signalr/negotiate', ...options });

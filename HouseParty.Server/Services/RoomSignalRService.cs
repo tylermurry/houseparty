@@ -30,16 +30,10 @@ public sealed class RoomSignalRService : IAsyncDisposable
         await context.Groups.AddToGroupAsync(connectionId, RoomGroup(roomId), cancellationToken);
     }
 
-    public async Task SendCounterToConnectionAsync(string connectionId, int count, CancellationToken cancellationToken)
+    public async Task BroadcastPlayersAsync(string roomId, IReadOnlyList<RoomPlayer> players, CancellationToken cancellationToken)
     {
         var context = await GetHubContextAsync(cancellationToken);
-        await context.Clients.Client(connectionId).SendAsync("counterUpdated", count, cancellationToken);
-    }
-
-    public async Task BroadcastCounterAsync(string roomId, int count, CancellationToken cancellationToken)
-    {
-        var context = await GetHubContextAsync(cancellationToken);
-        await context.Clients.Group(RoomGroup(roomId)).SendAsync("counterUpdated", count, cancellationToken);
+        await context.Clients.Group(RoomGroup(roomId)).SendAsync("playerRosterUpdated", players, cancellationToken);
     }
 
     public async ValueTask DisposeAsync()
