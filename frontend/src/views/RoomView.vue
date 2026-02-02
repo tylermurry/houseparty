@@ -13,6 +13,7 @@ const isConnecting = ref(true)
 const connectionError = ref('')
 const playerName = ref('')
 type PlayerEntry = { number: number; name: string }
+type RawPlayer = RoomPlayer | { Number?: string | number; Name?: string }
 
 const playerNumber = ref<number | null>(null)
 const players = ref<PlayerEntry[]>([])
@@ -22,6 +23,7 @@ const joinError = ref('')
 const copyStatus = ref('')
 const roomLink = computed(() => window.location.href)
 const nameInputRef = ref<HTMLInputElement | null>(null)
+let copyStatusTimer: number | null = null
 let connection: HubConnection | null = null
 
 async function negotiateConnection() {
@@ -33,7 +35,7 @@ async function negotiateConnection() {
 }
 
 async function joinRoom(connectionId: string, existingPlayerNumber?: number | null) {
-  const trimmedName = playerName.value.trim()
+  const trimmedName = playerName.value.trim().slice(0, 10)
   if (!trimmedName) {
     joinError.value = 'Name is required.'
     return
@@ -77,8 +79,11 @@ async function startConnection() {
     .withAutomaticReconnect()
     .build()
 
-  connection.on('playerRosterUpdated', (updatedPlayers: RoomPlayer[]) => {
-    players.value = normalizePlayers(updatedPlayers)
+  connection.on('playerRosterUpdated', (updatedPlayers: RawPlayer[]) => {
+    const normalized = normalizePlayers(updatedPlayers)
+    if (normalized.length > 0) {
+      players.value = normalized
+    }
   })
 
   connection.onreconnected(async (connectionId) => {
@@ -116,10 +121,18 @@ async function submitName() {
 
 async function copyLink() {
   copyStatus.value = ''
+  if (copyStatusTimer) {
+    window.clearTimeout(copyStatusTimer)
+    copyStatusTimer = null
+  }
   try {
     if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(roomLink.value)
       copyStatus.value = 'Link copied.'
+      copyStatusTimer = window.setTimeout(() => {
+        copyStatus.value = ''
+        copyStatusTimer = null
+      }, 3000)
       return
     }
   } catch {
@@ -133,13 +146,13 @@ function toNumber(value: string | number) {
   return typeof value === 'number' ? value : Number.parseInt(value, 10)
 }
 
-function normalizePlayers(rawPlayers: RoomPlayer[]): PlayerEntry[] {
+function normalizePlayers(rawPlayers: RawPlayer[]): PlayerEntry[] {
   return rawPlayers
     .map((player) => ({
-      number: toNumber(player.number),
-      name: player.name,
+      number: toNumber('number' in player ? player.number : player.Number),
+      name: 'name' in player ? player.name : player.Name,
     }))
-    .filter((player) => Number.isFinite(player.number))
+    .filter((player) => Number.isFinite(player.number) && Boolean(player.name))
 }
 
 onMounted(() => {
@@ -153,6 +166,9 @@ watch([isConnected, hasJoined], async ([connected, joined]) => {
 })
 
 onBeforeUnmount(() => {
+  if (copyStatusTimer) {
+    window.clearTimeout(copyStatusTimer)
+  }
   void connection?.stop()
 })
 </script>
@@ -188,7 +204,7 @@ onBeforeUnmount(() => {
           autocorrect="off"
           autocapitalize="off"
           spellcheck="false"
-          maxlength="24"
+          maxlength="10"
           placeholder="e.g. Alex"
           ref="nameInputRef"
         />
