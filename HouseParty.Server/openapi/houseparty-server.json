@@ -93,6 +93,48 @@
         }
       }
     },
+    "/api/rooms/{roomId}/mouse": {
+      "post": {
+        "tags": [
+          "Rooms"
+        ],
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MousePresenceUpdate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MousePresenceUpdate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/MousePresenceUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/signalr/negotiate": {
       "post": {
         "tags": [
@@ -125,6 +167,44 @@
   },
   "components": {
     "schemas": {
+      "MousePresenceUpdate": {
+        "required": [
+          "playerNumber",
+          "name",
+          "x",
+          "y"
+        ],
+        "type": "object",
+        "properties": {
+          "playerNumber": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "x": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "y": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "RoomCreated": {
         "required": [
           "id"
@@ -157,7 +237,8 @@
       "RoomJoinRequest": {
         "required": [
           "connectionId",
-          "name"
+          "name",
+          "playerNumber"
         ],
         "type": "object",
         "properties": {

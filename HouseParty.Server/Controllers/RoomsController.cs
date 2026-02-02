@@ -36,4 +36,26 @@ public sealed class RoomsController(RoomService service, RoomSignalRService sign
 
         return Ok(new RoomJoined(joinResult.Player, joinResult.Players));
     }
+
+    [HttpPost("{roomId}/mouse")]
+    public async Task<IActionResult> UpdateMousePresence(string roomId, [FromBody] MousePresenceUpdate request, CancellationToken cancellationToken)
+    {
+        if (request.PlayerNumber <= 0)
+        {
+            return BadRequest("PlayerNumber is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            return BadRequest("Name is required.");
+        }
+
+        if (request.X is < 0 or > 2047 || request.Y is < 0 or > 2047)
+        {
+            return BadRequest("Mouse coordinates are out of range.");
+        }
+
+        await signalR.BroadcastMousePresenceAsync(roomId, request, cancellationToken);
+        return Accepted();
+    }
 }

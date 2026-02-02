@@ -4,6 +4,13 @@ export type ClientOptions = {
     baseUrl: `${string}://${string}` | (string & {});
 };
 
+export type MousePresenceUpdate = {
+    playerNumber: number | string;
+    name: string;
+    x: number | string;
+    y: number | string;
+};
+
 export type RoomCreated = {
     id: string;
 };
@@ -16,7 +23,7 @@ export type RoomJoined = {
 export type RoomJoinRequest = {
     connectionId: string;
     name: string;
-    playerNumber?: null | number | string;
+    playerNumber: null | number | string;
 };
 
 export type RoomPlayer = {
@@ -62,6 +69,22 @@ export type PostApiRoomsByRoomIdJoinResponses = {
 };
 
 export type PostApiRoomsByRoomIdJoinResponse = PostApiRoomsByRoomIdJoinResponses[keyof PostApiRoomsByRoomIdJoinResponses];
+
+export type PostApiRoomsByRoomIdMouseData = {
+    body: MousePresenceUpdate;
+    path: {
+        roomId: string;
+    };
+    query?: never;
+    url: '/api/rooms/{roomId}/mouse';
+};
+
+export type PostApiRoomsByRoomIdMouseResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type PostApiSignalrNegotiateData = {
     body?: never;

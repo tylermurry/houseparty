@@ -36,6 +36,12 @@ public sealed class RoomSignalRService : IAsyncDisposable
         await context.Clients.Group(RoomGroup(roomId)).SendAsync("playerRosterUpdated", players, cancellationToken);
     }
 
+    public async Task BroadcastMousePresenceAsync(string roomId, MousePresenceUpdate update, CancellationToken cancellationToken)
+    {
+        var context = await GetHubContextAsync(cancellationToken);
+        await context.Clients.Group(RoomGroup(roomId)).SendAsync("mousePresenceUpdated", update, cancellationToken);
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (!hubContext.IsValueCreated)

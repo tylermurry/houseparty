@@ -61,7 +61,7 @@ async function createRoom() {
 }
 
 .logo {
-  width: 20vw;
+  width: 400px;
   height: auto;
   animation: bob 2s ease-in-out infinite;
 }

@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { PostApiRoomsByRoomIdJoinData, PostApiRoomsByRoomIdJoinResponses, PostApiRoomsData, PostApiRoomsResponses, PostApiSignalrNegotiateData, PostApiSignalrNegotiateResponses } from './types.gen';
+import type { PostApiRoomsByRoomIdJoinData, PostApiRoomsByRoomIdJoinResponses, PostApiRoomsByRoomIdMouseData, PostApiRoomsByRoomIdMouseResponses, PostApiRoomsData, PostApiRoomsResponses, PostApiSignalrNegotiateData, PostApiSignalrNegotiateResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -22,6 +22,15 @@ export const postApiRooms = <ThrowOnError extends boolean = false>(options?: Opt
 
 export const postApiRoomsByRoomIdJoin = <ThrowOnError extends boolean = false>(options: Options<PostApiRoomsByRoomIdJoinData, ThrowOnError>) => (options.client ?? client).post<PostApiRoomsByRoomIdJoinResponses, unknown, ThrowOnError>({
     url: '/api/rooms/{roomId}/join',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const postApiRoomsByRoomIdMouse = <ThrowOnError extends boolean = false>(options: Options<PostApiRoomsByRoomIdMouseData, ThrowOnError>) => (options.client ?? client).post<PostApiRoomsByRoomIdMouseResponses, unknown, ThrowOnError>({
+    url: '/api/rooms/{roomId}/mouse',
     ...options,
     headers: {
         'Content-Type': 'application/json',

@@ -6,6 +6,9 @@ import API from '@/api-client/client'
 import PlayerRoster from '@/components/PlayerRoster.vue'
 import type { RoomPlayer } from '@/api-client/client/types.gen'
 
+const GRID_SIZE = 2048
+const PRESENCE_INTERVAL_MS = 1000 / 30
+
 const route = useRoute()
 const roomId = computed(() => route.params.roomId?.toString() ?? '')
 const isConnected = ref(false)
@@ -14,6 +17,8 @@ const connectionError = ref('')
 const playerName = ref('')
 type PlayerEntry = { number: number; name: string }
 type RawPlayer = RoomPlayer | { Number?: string | number; Name?: string }
+type MousePresenceUpdate = { playerNumber: number; name: string; x: number; y: number }
+type RawMousePresenceUpdate = MousePresenceUpdate | { PlayerNumber?: string | number; Name?: string; X?: number; Y?: number }
 
 const playerNumber = ref<number | null>(null)
 const players = ref<PlayerEntry[]>([])
@@ -25,6 +30,37 @@ const roomLink = computed(() => window.location.href)
 const nameInputRef = ref<HTMLInputElement | null>(null)
 let copyStatusTimer: number | null = null
 let connection: HubConnection | null = null
+const lastSentMouse = ref<{ x: number; y: number } | null>(null)
+const latestPointer = ref<{ x: number; y: number } | null>(null)
+const presenceList = ref<
+  Array<{
+    playerNumber: number
+    name: string
+    color: string
+    currentX: number
+    currentY: number
+    targetX: number
+    targetY: number
+  }>
+>([])
+let presenceTimer: number | null = null
+let presenceAnimationFrame: number | null = null
+
+const playerNameMap = computed(() => new Map(players.value.map((player) => [player.number, player.name])))
+const visiblePresence = computed(() =>
+  presenceList.value.filter((presence) => presence.playerNumber !== playerNumber.value),
+)
+
+const apiBaseUrl = (import.meta.env.VITE_BACKEND_API_URL ?? '').replace(/\/$/, '')
+const mousePresenceUrl = computed(() =>
+  apiBaseUrl ? `${apiBaseUrl}/api/rooms/${roomId.value}/mouse` : `/api/rooms/${roomId.value}/mouse`,
+)
+const handlePointerMove = (event: PointerEvent) => {
+  latestPointer.value = { x: event.clientX, y: event.clientY }
+}
+const handlePointerLeave = () => {
+  latestPointer.value = null
+}
 
 async function negotiateConnection() {
   const response = await API.postApiSignalrNegotiate()
@@ -86,6 +122,12 @@ async function startConnection() {
     }
   })
 
+  connection.on('mousePresenceUpdated', (update: RawMousePresenceUpdate) => {
+    const normalized = normalizeMousePresence(update)
+    if (!normalized) return
+    upsertPresence(normalized)
+  })
+
   connection.onreconnected(async (connectionId) => {
     isConnected.value = true
     if (connectionId && hasJoined.value) {
@@ -142,21 +184,153 @@ async function copyLink() {
   window.prompt('Copy this room link:', roomLink.value)
 }
 
-function toNumber(value: string | number) {
-  return typeof value === 'number' ? value : Number.parseInt(value, 10)
+function toNumber(value: string | number | undefined | null) {
+  if (typeof value === 'number') {
+    return value
+  }
+  if (typeof value === 'string') {
+    return Number.parseInt(value, 10)
+  }
+  return Number.NaN
 }
 
 function normalizePlayers(rawPlayers: RawPlayer[]): PlayerEntry[] {
   return rawPlayers
     .map((player) => ({
       number: toNumber('number' in player ? player.number : player.Number),
-      name: 'name' in player ? player.name : player.Name,
+      name: ('name' in player ? player.name : player.Name) ?? '',
     }))
-    .filter((player) => Number.isFinite(player.number) && Boolean(player.name))
+    .filter((player) => Number.isFinite(player.number) && player.name.length > 0)
+}
+
+function normalizeMousePresence(update: RawMousePresenceUpdate): MousePresenceUpdate | null {
+  const number = toNumber('playerNumber' in update ? update.playerNumber : update.PlayerNumber)
+  const name = 'name' in update ? update.name : update.Name
+  const rawX = 'x' in update ? update.x : update.X
+  const rawY = 'y' in update ? update.y : update.Y
+  const xValue = typeof rawX === 'number' ? rawX : Number(rawX)
+  const yValue = typeof rawY === 'number' ? rawY : Number(rawY)
+
+  if (!Number.isFinite(number) || !Number.isFinite(xValue) || !Number.isFinite(yValue)) {
+    return null
+  }
+
+  return {
+    playerNumber: number,
+    name: name ?? '',
+    x: xValue,
+    y: yValue,
+  }
+}
+
+function playerColor(number: number) {
+  const normalized = ((number - 1) % 20) + 1
+  return `var(--color-player-${normalized})`
+}
+
+function quantizePointer(pointer: { x: number; y: number }) {
+  const width = window.innerWidth
+  const height = window.innerHeight
+  if (width <= 0 || height <= 0) {
+    return null
+  }
+
+  const normalizedX = Math.min(1, Math.max(0, pointer.x / width))
+  const normalizedY = Math.min(1, Math.max(0, pointer.y / height))
+
+  const x = Math.min(GRID_SIZE - 1, Math.max(0, Math.floor(normalizedX * GRID_SIZE)))
+  const y = Math.min(GRID_SIZE - 1, Math.max(0, Math.floor(normalizedY * GRID_SIZE)))
+
+  return { x, y }
+}
+
+function upsertPresence(update: MousePresenceUpdate) {
+  const targetX = Math.min(1, Math.max(0, update.x / GRID_SIZE))
+  const targetY = Math.min(1, Math.max(0, update.y / GRID_SIZE))
+  const resolvedName = playerNameMap.value.get(update.playerNumber) ?? update.name ?? ''
+  const color = playerColor(update.playerNumber)
+  const existing = presenceList.value.find((presence) => presence.playerNumber === update.playerNumber)
+
+  if (!existing) {
+    presenceList.value.push({
+      playerNumber: update.playerNumber,
+      name: resolvedName,
+      color,
+      currentX: targetX,
+      currentY: targetY,
+      targetX,
+      targetY,
+    })
+    return
+  }
+
+  existing.name = resolvedName
+  existing.color = color
+  existing.targetX = targetX
+  existing.targetY = targetY
+}
+
+function animatePresence() {
+  const smoothing = 0.2
+  presenceList.value.forEach((presence) => {
+    presence.currentX += (presence.targetX - presence.currentX) * smoothing
+    presence.currentY += (presence.targetY - presence.currentY) * smoothing
+  })
+  presenceAnimationFrame = window.requestAnimationFrame(animatePresence)
+}
+
+async function sendMousePresence(quantized: { x: number; y: number }) {
+  if (!hasJoined.value || playerNumber.value === null) {
+    return
+  }
+
+  const trimmedName = playerName.value.trim().slice(0, 10)
+  if (!trimmedName) {
+    return
+  }
+
+  try {
+    await fetch(mousePresenceUrl.value, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        playerNumber: playerNumber.value,
+        name: trimmedName,
+        x: quantized.x,
+        y: quantized.y,
+      }),
+    })
+  } catch {
+    // Ignore transient mouse update errors.
+  }
+}
+
+function startPresenceUpdates() {
+  if (presenceTimer) return
+  presenceTimer = window.setInterval(() => {
+    if (!latestPointer.value) return
+    const quantized = quantizePointer(latestPointer.value)
+    if (!quantized) return
+    if (lastSentMouse.value && lastSentMouse.value.x === quantized.x && lastSentMouse.value.y === quantized.y) {
+      return
+    }
+    lastSentMouse.value = quantized
+    void sendMousePresence(quantized)
+  }, PRESENCE_INTERVAL_MS)
+}
+
+function stopPresenceUpdates() {
+  if (!presenceTimer) return
+  window.clearInterval(presenceTimer)
+  presenceTimer = null
+  lastSentMouse.value = null
 }
 
 onMounted(() => {
   void startConnection()
+  animatePresence()
+  window.addEventListener('pointermove', handlePointerMove)
+  window.addEventListener('pointerleave', handlePointerLeave)
 })
 
 watch([isConnected, hasJoined], async ([connected, joined]) => {
@@ -169,8 +343,37 @@ onBeforeUnmount(() => {
   if (copyStatusTimer) {
     window.clearTimeout(copyStatusTimer)
   }
+  stopPresenceUpdates()
+  if (presenceAnimationFrame) {
+    window.cancelAnimationFrame(presenceAnimationFrame)
+    presenceAnimationFrame = null
+  }
+  window.removeEventListener('pointermove', handlePointerMove)
+  window.removeEventListener('pointerleave', handlePointerLeave)
   void connection?.stop()
 })
+
+watch([isConnected, hasJoined], ([connected, joined]) => {
+  if (connected && joined) {
+    startPresenceUpdates()
+  } else {
+    stopPresenceUpdates()
+  }
+})
+
+watch(
+  players,
+  (updatedPlayers) => {
+    const updatedMap = new Map(updatedPlayers.map((player) => [player.number, player.name]))
+    presenceList.value.forEach((presence) => {
+      const updatedName = updatedMap.get(presence.playerNumber)
+      if (updatedName) {
+        presence.name = updatedName
+      }
+    })
+  },
+  { deep: true },
+)
 </script>
 
 <template>
@@ -212,6 +415,21 @@ onBeforeUnmount(() => {
         <div v-if="joinError" class="hint error">{{ joinError }}</div>
       </form>
     </div>
+
+    <div class="presence-layer">
+      <div
+        v-for="presence in visiblePresence"
+        :key="presence.playerNumber"
+        class="presence-cursor"
+        :style="{
+          left: `${presence.currentX * 100}%`,
+          top: `${presence.currentY * 100}%`,
+        }"
+      >
+        <div class="presence-pointer"></div>
+        <div class="presence-label" :style="{ color: presence.color }">{{ presence.name }}</div>
+      </div>
+    </div>
   </main>
 </template>
 
@@ -246,6 +464,33 @@ onBeforeUnmount(() => {
 .room-main {
   display: grid;
   gap: 24px;
+}
+
+.presence-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 8;
+}
+
+.presence-cursor {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+
+.presence-pointer {
+  width: 24px;
+  height: 32px;
+  background-image: url('@/assets/images/hand.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.presence-label {
+  font-size: 10pt;
 }
 
 header h1 {
