@@ -5,13 +5,12 @@
   "type": "module",
   "scripts": {
     "gen:api": "openapi-ts -i ../HouseParty.Server/openapi/houseparty-server.json -o src/api-client/client",
-    "predev": "run-s gen:api lint type-check",
-    "dev": "vite",
-    "prebuild": "run-s gen:api lint type-check",
-    "build": "vite build",
+    "format": "prettier --write --experimental-cli src/",
     "type-check": "vue-tsc --build",
     "lint": "eslint . --fix --cache",
-    "format": "prettier --write --experimental-cli src/"
+    "validate": "run-s gen:api lint type-check build",
+    "dev": "vite",
+    "build": "vite build"
   },
   "dependencies": {
     "@microsoft/signalr": "^8.0.7",

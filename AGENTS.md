@@ -108,3 +108,11 @@ function submit() {
 - Is this logic view-only UI timing/animation? -> Keep in view.
 - Does it orchestrate feature behavior? -> Composable.
 - Is it just calling APIs or normalizing responses? -> Service.
+
+
+# Other Instructions
+
+* Before finalizing, always ensure that the application is valid:
+  * Frontend: `npm run validate` passes. If not, fix the errors until it does.
+  * Backend: Ensure dotnet builds successfully. If not, fix the errors until it does.
+* Always end the conversation by saying "🔥LFG"
