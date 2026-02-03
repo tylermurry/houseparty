@@ -107,7 +107,7 @@ watch(hasJoined, (joined) => {
     sidebarTimer = window.setTimeout(() => {
       showSidebar.value = true
       sidebarTimer = null
-    }, 1300)
+    }, 1100)
   } else {
     showSidebar.value = false
   }
@@ -152,7 +152,6 @@ onBeforeUnmount(() => {
       <div v-if="isConnected && !hasJoined && showNamePrompt" class="name-overlay">
         <form class="name-card" autocomplete="off" @submit.prevent="submitName">
           <div class="name-title">Enter your name</div>
-          <label class="name-label" for="player-name">Display name</label>
           <input
             id="player-name"
             v-model="playerName"
@@ -219,7 +218,7 @@ onBeforeUnmount(() => {
 }
 
 .sidebar-fly-enter-active {
-  transition: opacity 260ms ease, transform 260ms ease;
+  transition: opacity 720ms ease, transform 720ms ease;
 }
 
 .sidebar-fly-enter-from {
@@ -367,6 +366,8 @@ button:disabled {
 .name-title {
   font-size: 18px;
   font-weight: 700;
+  color: #6c6c6c;
+  margin-bottom: 20px;
 }
 
 .name-label {
