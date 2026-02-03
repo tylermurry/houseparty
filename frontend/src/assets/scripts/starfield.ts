@@ -12,6 +12,8 @@ type Star = {
     plus: boolean;
 };
 
+let activeField: PixelStarField | null = null;
+
 class PixelStarField {
     private container: HTMLElement;
     private canvas: HTMLCanvasElement;
@@ -34,6 +36,14 @@ class PixelStarField {
     private camXTarget = 0;
     private camYTarget = 0;
     private ease = 0.08;
+    private travelAnim: {
+        startX: number;
+        startY: number;
+        deltaX: number;
+        deltaY: number;
+        startTime: number;
+        duration: number;
+    } | null = null;
 
     private resizeHandler = this.resize.bind(this);
     private frameHandler = this.frame.bind(this);
@@ -82,6 +92,17 @@ class PixelStarField {
     travel(dist: number, dir: Vec2) {
         this.camXTarget += (dir.x || 0) * dist;
         this.camYTarget += (dir.y || 0) * dist;
+    }
+
+    animateTravel(dist: number, dir: Vec2, duration = 1400) {
+        this.travelAnim = {
+            startX: this.camXTarget,
+            startY: this.camYTarget,
+            deltaX: (dir.x || 0) * dist,
+            deltaY: (dir.y || 0) * dist,
+            startTime: performance.now(),
+            duration,
+        };
     }
 
     private resize() {
@@ -133,6 +154,17 @@ class PixelStarField {
         const dt = Math.min(0.05, (now - this.last) / 1000);
         this.last = now;
 
+        if (this.travelAnim) {
+            const elapsed = now - this.travelAnim.startTime;
+            const t = Math.min(1, Math.max(0, elapsed / this.travelAnim.duration));
+            const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+            this.camXTarget = this.travelAnim.startX + this.travelAnim.deltaX * eased;
+            this.camYTarget = this.travelAnim.startY + this.travelAnim.deltaY * eased;
+            if (t >= 1) {
+                this.travelAnim = null;
+            }
+        }
+
         this.camX += (this.camXTarget - this.camX) * this.ease;
         this.camY += (this.camYTarget - this.camY) * this.ease;
 
@@ -169,6 +201,7 @@ class PixelStarField {
 
 export function initStarfield(targetId = 'starfield') {
     const field = new PixelStarField(targetId);
+    activeField = field;
     const keyMap = new Set<string>();
     const SPEED = 900;
     let keyboardFrameId = 0;
@@ -211,6 +244,16 @@ export function initStarfield(targetId = 'starfield') {
             window.removeEventListener('keydown', onKeyDown);
             window.removeEventListener('keyup', onKeyUp);
             field.destroy();
+            if (activeField === field) {
+                activeField = null;
+            }
         },
     };
+}
+export function travelStarfieldUp(distance = 520) {
+    activeField?.animateTravel(distance, { x: 0, y: -1 });
+}
+
+export function travelStarfieldDown(distance = 520) {
+    activeField?.animateTravel(distance, { x: 0, y: 1 });
 }

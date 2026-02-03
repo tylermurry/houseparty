@@ -1,41 +1,53 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import API from '@/api-client/client';
+import { createRoom as createRoomRequest } from '@/services/roomService'
 
 const router = useRouter()
 const isBusy = ref(false)
+const isCreating = ref(false)
 const status = ref('')
 const logoUrl = new URL('../assets/images/HousePartyLogo.png', import.meta.url).href
 
 
 async function createRoom() {
   status.value = ''
+  isCreating.value = true
+  let didNavigate = false
   try {
     isBusy.value = true
-    const room = await API.postApiRooms()
+    const room = await createRoomRequest()
     if (!room.data?.id) {
       status.value = 'Failed to create room.'
       return
     }
-    router.push(`/room/${room.data.id}`)
+    didNavigate = true
+    await new Promise((resolve) => window.setTimeout(resolve, 300))
+    router.push({ path: `/room/${room.data.id}`, state: { fromCreate: true } })
   } catch (error) {
     status.value = 'Failed to create room.'
     console.error(error)
   } finally {
     isBusy.value = false
+    if (!didNavigate) {
+      isCreating.value = false
+    }
   }
 }
 </script>
 
 <template>
   <main class="shell">
-    <div class="logo-wrap">
-      <img class="logo" :src="logoUrl" alt="HouseParty logo" />
-    </div>
-    <div>
-      <button class="create-room-button" :onclick="createRoom">CREATE ROOM</button>
-    </div>
+    <Transition name="home-logo">
+      <div v-if="!isCreating" class="logo-wrap">
+        <img class="logo" :src="logoUrl" alt="HouseParty logo" />
+      </div>
+    </Transition>
+    <Transition name="home-button">
+      <div v-if="!isCreating">
+        <button class="create-room-button" :disabled="isBusy" @click="createRoom">CREATE ROOM</button>
+      </div>
+    </Transition>
 
 
   </main>
@@ -70,6 +82,34 @@ async function createRoom() {
   margin-top: 3rem;
   width: 300px;
   height: 60px
+}
+
+.home-logo-leave-active {
+  transition: opacity 260ms ease, transform 260ms ease;
+}
+
+.home-logo-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.home-logo-leave-to {
+  opacity: 0;
+  transform: translateY(-100px);
+}
+
+.home-button-leave-active {
+  transition: opacity 260ms ease, transform 260ms ease;
+}
+
+.home-button-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.home-button-leave-to {
+  opacity: 0;
+  transform: translateY(100px);
 }
 
 @keyframes bob {

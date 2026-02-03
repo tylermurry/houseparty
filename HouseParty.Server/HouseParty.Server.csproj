@@ -28,6 +28,12 @@
     <Folder Include="openapi\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="..\AGENTS.md">
+      <Link>AGENTS.md</Link>
+    </Content>
+  </ItemGroup>
+
   <!-- OpenAPI Spec Generation: This is picked up by the frontend to generate a client so calls and types are in-sync -->
   <PropertyGroup>
     <OpenApiGenerateDocuments>true</OpenApiGenerateDocuments>

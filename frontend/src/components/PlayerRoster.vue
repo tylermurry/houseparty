@@ -13,10 +13,17 @@ const playerColor = (number: number) => {
   <div class="roster">
     <div class="roster-title">Players</div>
     <div v-if="players.length === 0" class="roster-empty">No one has joined yet.</div>
-    <div v-for="player in players" :key="player.number" class="roster-row">
-      <div class="roster-swatch" :style="{ backgroundColor: playerColor(player.number) }"></div>
-      <div class="roster-name">{{ player.name }}</div>
-    </div>
+    <TransitionGroup name="roster-fly" tag="div" class="roster-list">
+      <div
+        v-for="(player, index) in players"
+        :key="player.number"
+        class="roster-row"
+        :style="{ '--roster-delay': `${index * 60}ms` }"
+      >
+        <div class="roster-swatch" :style="{ backgroundColor: playerColor(player.number) }"></div>
+        <div class="roster-name">{{ player.name }}</div>
+      </div>
+    </TransitionGroup>
   </div>
 </template>
 
@@ -25,6 +32,21 @@ const playerColor = (number: number) => {
   display: grid;
   gap: 10px;
   align-items: start;
+}
+
+.roster-list {
+  display: grid;
+  gap: 10px;
+}
+
+.roster-fly-enter-active {
+  transition: transform 220ms ease, opacity 220ms ease;
+  transition-delay: var(--roster-delay, 0ms);
+}
+
+.roster-fly-enter-from {
+  opacity: 0;
+  transform: translateX(-26px);
 }
 
 .roster-title {
