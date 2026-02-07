@@ -7,6 +7,7 @@ import { useRoomConnection } from '@/composables/useRoomConnection'
 import { useRoomJoin } from '@/composables/useRoomJoin'
 import { useMousePresence } from '@/composables/useMousePresence'
 import { useCopyLink } from '@/composables/useCopyLink'
+import { useGameCatalog } from '@/composables/useGameCatalog'
 import type { PlayerEntry } from '@/services/roomService'
 
 const route = useRoute()
@@ -47,6 +48,8 @@ const { visiblePresence, advancePresence } = useMousePresence({
 
 const roomLink = computed(() => window.location.href)
 const { copyStatus, copyLink } = useCopyLink(roomLink)
+
+const { games, activeGame, selectGame } = useGameCatalog()
 
 const nameInputRef = ref<HTMLInputElement | null>(null)
 let namePromptTimer: number | null = null
@@ -129,22 +132,59 @@ onBeforeUnmount(() => {
 
 <template>
   <main class="room-shell">
-    <aside class="room-sidebar">
+    <header class="room-header">
+      <section class="room-status">
+        <p v-if="isConnecting" class="hint">Connecting to room...</p>
+        <p v-else-if="connectionError" class="hint error">{{ connectionError }}</p>
+      </section>
       <Transition name="sidebar-fly">
         <div v-if="showSidebar" class="copy-link">
           <button class="primary" @click="copyLink">Copy Link</button>
           <div v-if="copyStatus" class="copy-status">{{ copyStatus }}</div>
         </div>
       </Transition>
+    </header>
+
+    <aside class="room-sidebar">
       <Transition name="sidebar-fly">
         <PlayerRoster v-if="showSidebar" :players="players" />
       </Transition>
     </aside>
 
     <section class="room-main">
-      <section class="panel">
-        <p v-if="isConnecting" class="hint">Connecting to room...</p>
-        <p v-else-if="connectionError" class="hint error">{{ connectionError }}</p>
+      <section v-if="hasJoined && !activeGame" class="panel game-panel">
+        <div class="game-header">
+          <div>
+            <div class="game-title">Choose a game</div>
+          </div>
+        </div>
+
+        <div class="game-grid">
+          <article
+            v-for="game in games"
+            :key="game.id"
+            class="game-card"
+            role="button"
+            tabindex="0"
+            @click="selectGame(game.id)"
+            @keydown.enter="selectGame(game.id)"
+            @keydown.space.prevent="selectGame(game.id)"
+          >
+            <div class="game-card-body">
+              <div class="game-card-title">{{ game.title }}</div>
+            </div>
+            <div class="game-thumb">
+              <img :src="game.thumbnailUrl" :alt="`${game.title} preview`" />
+            </div>
+            <div class="game-card-body">
+              <div class="game-card-description">{{ game.description }}</div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section v-if="hasJoined && activeGame" class="game-area">
+        <component :is="activeGame.component" />
       </section>
     </section>
 
@@ -193,11 +233,28 @@ onBeforeUnmount(() => {
 .room-shell {
   width: 100%;
   margin: 0;
-  padding: 32px 24px 60px;
+  padding: 1rem;
+  box-sizing: border-box;
   display: grid;
   grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
-  gap: 32px;
-  align-items: start;
+  grid-template-rows: auto 1fr;
+  row-gap: 1rem;
+  align-items: stretch;
+  height: 100vh;
+}
+
+.room-header {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 53px;
+}
+
+.room-status {
+  display: grid;
+  gap: 4px;
 }
 
 .room-sidebar {
@@ -214,7 +271,7 @@ onBeforeUnmount(() => {
 
 .copy-status {
   font-size: 12px;
-  color: #6c6c6c;
+  color: var(--text-light-constrast);
 }
 
 .sidebar-fly-enter-active {
@@ -232,8 +289,12 @@ onBeforeUnmount(() => {
 }
 
 .room-main {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 24px;
+  min-height: 0;
+  align-content: start;
+  overflow: hidden;
 }
 
 .presence-layer {
@@ -272,14 +333,100 @@ header h1 {
 
 .hint {
   margin: 0;
-  color: #6c6c6c;
+  color: var(--text-light-constrast);
   font-size: 14px;
 }
 
 .panel {
-  padding: 20px;
   display: grid;
   gap: 16px;
+}
+
+.game-panel {
+  gap: 24px;
+}
+
+.game-header {
+  display: grid;
+  gap: 6px;
+}
+
+.game-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-dark-constrast);
+}
+
+.game-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(4, minmax(0, 400px));
+  justify-content: start;
+}
+
+.game-card {
+  border: 1px solid #d0d0c8;
+  background: #ffffff;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: normal;
+  color: #1c1c1c;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.game-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.game-thumb {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #f6f6f2;
+}
+
+.game-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.game-card-body {
+  display: grid;
+  gap: 6px;
+}
+
+.game-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-light-constrast);
+}
+
+.game-card-description {
+  font-size: 13px;
+  color: var(--text-light-constrast);
+  line-height: 1.6;
+}
+
+
+.game-area {
+  padding: 1rem;
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+}
+
+.game-area > * {
+  flex: 1;
 }
 
 .panel-row {
@@ -366,7 +513,7 @@ button:disabled {
 .name-title {
   font-size: 18px;
   font-weight: 700;
-  color: #6c6c6c;
+  color: var(--text-light-constrast);
   margin-bottom: 20px;
 }
 
@@ -374,7 +521,7 @@ button:disabled {
   font-size: 12px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #6c6c6c;
+  color: var(--text-light-constrast);
 }
 
 .name-input {
@@ -401,6 +548,24 @@ button:disabled {
 @media (max-width: 800px) {
   .room-shell {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1200px) {
+  .game-grid {
+    grid-template-columns: repeat(3, minmax(0, 400px));
+  }
+}
+
+@media (max-width: 900px) {
+  .game-grid {
+    grid-template-columns: repeat(2, minmax(0, 400px));
+  }
+}
+
+@media (max-width: 600px) {
+  .game-grid {
+    grid-template-columns: repeat(1, minmax(0, 400px));
   }
 }
 </style>

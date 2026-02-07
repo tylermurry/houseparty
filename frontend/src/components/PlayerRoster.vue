@@ -53,7 +53,7 @@ const playerColor = (number: number) => {
   font-size: 12px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: #6c6c6c;
+  color: var(--text-light-constrast);
 }
 
 .roster-empty {
