@@ -52,11 +52,17 @@ const { copyStatus, copyLink } = useCopyLink(roomLink)
 const { games, activeGame, selectGame } = useGameCatalog()
 
 const nameInputRef = ref<HTMLInputElement | null>(null)
+const gameGridRef = ref<HTMLElement | null>(null)
 let namePromptTimer: number | null = null
-let sidebarTimer: number | null = null
 let presenceAnimationFrame: number | null = null
+let gridResizeObserver: ResizeObserver | null = null
 const showNamePrompt = ref(false)
 const showSidebar = ref(false)
+const starfieldTravelMs = 1500
+const animationLeadMs = 200
+const animationStartDelayMs = Math.max(starfieldTravelMs - animationLeadMs, 0)
+const animationVars = { '--animation-start-delay': `${animationStartDelayMs}ms` }
+const gameGridColumns = ref(1)
 
 async function submitName() {
   if (!connection.value || !isConnected.value || !connection.value.connectionId) {
@@ -71,9 +77,32 @@ function animatePresence() {
   presenceAnimationFrame = window.requestAnimationFrame(animatePresence)
 }
 
+function updateGameGridColumns() {
+  if (!gameGridRef.value) return
+  const columns = window
+    .getComputedStyle(gameGridRef.value)
+    .gridTemplateColumns.split(' ')
+    .filter(Boolean).length
+  gameGridColumns.value = Math.max(columns, 1)
+}
+
+function getGameDelay(index: number) {
+  const columns = gameGridColumns.value || 1
+  const row = Math.floor(index / columns)
+  const col = index % columns
+  return (row * columns + col) * 90
+}
+
 onMounted(() => {
   void startConnection()
   animatePresence()
+  gridResizeObserver = new ResizeObserver(() => {
+    updateGameGridColumns()
+  })
+  if (gameGridRef.value) {
+    gridResizeObserver.observe(gameGridRef.value)
+    updateGameGridColumns()
+  }
 })
 
 watch([isConnected, hasJoined, showNamePrompt], async ([connected, joined, promptVisible]) => {
@@ -100,45 +129,49 @@ watch([isConnected, hasJoined, cameFromCreate], ([connected, joined, fromCreate]
 })
 
 watch(hasJoined, (joined) => {
-  if (sidebarTimer) {
-    window.clearTimeout(sidebarTimer)
-    sidebarTimer = null
-  }
   if (joined) {
-    showSidebar.value = false
-    travelStarfieldDown(900)
-    sidebarTimer = window.setTimeout(() => {
-      showSidebar.value = true
-      sidebarTimer = null
-    }, 1100)
-  } else {
-    showSidebar.value = false
+    travelStarfieldDown(starfieldTravelMs)
+  }
+  showSidebar.value = joined
+  if (joined) {
+    void nextTick().then(() => {
+      updateGameGridColumns()
+    })
   }
 })
+
+watch(
+  () => games.length,
+  async () => {
+    await nextTick()
+    updateGameGridColumns()
+  },
+)
 
 onBeforeUnmount(() => {
   if (namePromptTimer) {
     window.clearTimeout(namePromptTimer)
   }
-  if (sidebarTimer) {
-    window.clearTimeout(sidebarTimer)
-  }
   if (presenceAnimationFrame) {
     window.cancelAnimationFrame(presenceAnimationFrame)
     presenceAnimationFrame = null
+  }
+  if (gridResizeObserver) {
+    gridResizeObserver.disconnect()
+    gridResizeObserver = null
   }
 })
 </script>
 
 <template>
-  <main class="room-shell">
+  <main class="room-shell" :style="animationVars">
     <header class="room-header">
       <section class="room-status">
         <p v-if="isConnecting" class="hint">Connecting to room...</p>
         <p v-else-if="connectionError" class="hint error">{{ connectionError }}</p>
       </section>
       <Transition name="sidebar-fly">
-        <div v-if="showSidebar" class="copy-link">
+        <div v-if="showSidebar" class="copy-link" :style="animationVars">
           <button class="primary" @click="copyLink">Copy Link</button>
           <div v-if="copyStatus" class="copy-status">{{ copyStatus }}</div>
         </div>
@@ -147,25 +180,35 @@ onBeforeUnmount(() => {
 
     <aside class="room-sidebar">
       <Transition name="sidebar-fly">
-        <PlayerRoster v-if="showSidebar" :players="players" />
+        <PlayerRoster v-if="showSidebar" :players="players" :style="animationVars" />
       </Transition>
     </aside>
 
     <section class="room-main">
       <section v-if="hasJoined && !activeGame" class="panel game-panel">
-        <div class="game-header">
-          <div>
-            <div class="game-title">Choose a game</div>
+        <Transition name="game-deal" appear>
+          <div class="game-header" :style="{ transitionDelay: `${animationStartDelayMs}ms` }">
+            <div>
+              <div class="game-title">Choose a game</div>
+            </div>
           </div>
-        </div>
+        </Transition>
 
-        <div class="game-grid">
+        <TransitionGroup
+          name="game-deal"
+          tag="div"
+          class="game-grid"
+          appear
+          :style="animationVars"
+          ref="gameGridRef"
+        >
           <article
-            v-for="game in games"
+            v-for="(game, index) in games"
             :key="game.id"
             class="game-card"
             role="button"
             tabindex="0"
+            :style="{ '--deal-delay': `${animationStartDelayMs + getGameDelay(index)}ms` }"
             @click="selectGame(game.id)"
             @keydown.enter="selectGame(game.id)"
             @keydown.space.prevent="selectGame(game.id)"
@@ -180,7 +223,7 @@ onBeforeUnmount(() => {
               <div class="game-card-description">{{ game.description }}</div>
             </div>
           </article>
-        </div>
+        </TransitionGroup>
       </section>
 
       <section v-if="hasJoined && activeGame" class="game-area">
@@ -276,6 +319,7 @@ onBeforeUnmount(() => {
 
 .sidebar-fly-enter-active {
   transition: opacity 720ms ease, transform 720ms ease;
+  transition-delay: var(--animation-start-delay, 0ms);
 }
 
 .sidebar-fly-enter-from {
@@ -286,6 +330,34 @@ onBeforeUnmount(() => {
 .sidebar-fly-enter-to {
   opacity: 1;
   transform: translateX(0);
+}
+
+.game-deal-enter-active {
+  transition: opacity 520ms ease, transform 520ms ease;
+}
+
+.game-deal-appear-active {
+  transition: opacity 520ms ease, transform 520ms ease;
+}
+
+.game-deal-enter-from {
+  opacity: 0;
+  transform: translateY(18px);
+}
+
+.game-deal-appear-from {
+  opacity: 0;
+  transform: translateY(18px);
+}
+
+.game-deal-enter-to {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.game-deal-appear-to {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .room-main {
@@ -365,22 +437,26 @@ header h1 {
 }
 
 .game-card {
-  border: 1px solid #d0d0c8;
-  background: #ffffff;
+  background: white;
   display: grid;
   gap: 12px;
   padding: 14px;
   text-align: left;
   text-transform: none;
   letter-spacing: normal;
-  color: #1c1c1c;
-  cursor: pointer;
+  color: var(--text-dark-constrast);
   transition: transform 160ms ease, box-shadow 160ms ease;
 }
 
 .game-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.game-card.game-deal-enter-active,
+.game-card.game-deal-appear-active {
+  transition: opacity 520ms ease, transform 520ms ease;
+  transition-delay: var(--deal-delay, 0ms);
 }
 
 .game-thumb {
@@ -457,7 +533,6 @@ button.ghost {
 
 button:disabled {
   opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .error {
