@@ -52,10 +52,8 @@ const { copyStatus, copyLink } = useCopyLink(roomLink)
 const { games, activeGame, selectGame } = useGameCatalog()
 
 const nameInputRef = ref<HTMLInputElement | null>(null)
-const gameGridRef = ref<HTMLElement | null>(null)
 let namePromptTimer: number | null = null
 let presenceAnimationFrame: number | null = null
-let gridResizeObserver: ResizeObserver | null = null
 let gameTransitionTimer: number | null = null
 let gameHoverTimer: number | null = null
 const showNamePrompt = ref(false)
@@ -67,10 +65,10 @@ const isGameTransitioning = ref(false)
 const allowGameHover = ref(false)
 const starfieldTravelMs = 1500
 const gameTransitionTravelMs = starfieldTravelMs * 2
+const gameAreaRevealMs = Math.round(gameTransitionTravelMs * 0.6)
 const animationLeadMs = 200
 const animationStartDelayMs = Math.max(starfieldTravelMs - animationLeadMs, 0)
 const animationVars = { '--animation-start-delay': `${animationStartDelayMs}ms` }
-const gameGridColumns = ref(1)
 const visibleGames = computed(() => (showGameList.value ? games : []))
 const gameTitleLeaveDelayMs = computed(() => {
   const totalCards = games.length
@@ -93,29 +91,13 @@ function animatePresence() {
   presenceAnimationFrame = window.requestAnimationFrame(animatePresence)
 }
 
-function updateGameGridColumns() {
-  if (!gameGridRef.value) return
-  const columns = window
-    .getComputedStyle(gameGridRef.value)
-    .gridTemplateColumns.split(' ')
-    .filter(Boolean).length
-  gameGridColumns.value = Math.max(columns, 1)
-}
-
 function getGameDelay(index: number) {
-  const columns = gameGridColumns.value || 1
-  const row = Math.floor(index / columns)
-  const col = index % columns
-  return (row * columns + col) * 90
+  return index * 90
 }
 
 function getGameLeaveDelay(index: number) {
-  const columns = gameGridColumns.value || 1
-  const row = Math.floor(index / columns)
-  const col = index % columns
-  const order = row * columns + col
   const total = games.length
-  const reverseOrder = Math.max(total - 1 - order, 0)
+  const reverseOrder = Math.max(total - 1 - index, 0)
   return reverseOrder * 90
 }
 
@@ -150,19 +132,12 @@ function handleGameSelect(gameId: string) {
     showGameArea.value = true
     isGameTransitioning.value = false
     gameTransitionTimer = null
-  }, gameTransitionTravelMs)
+  }, gameAreaRevealMs)
 }
 
 onMounted(() => {
   void startConnection()
   animatePresence()
-  gridResizeObserver = new ResizeObserver(() => {
-    updateGameGridColumns()
-  })
-  if (gameGridRef.value) {
-    gridResizeObserver.observe(gameGridRef.value)
-    updateGameGridColumns()
-  }
 })
 
 watch([isConnected, hasJoined, showNamePrompt], async ([connected, joined, promptVisible]) => {
@@ -193,11 +168,7 @@ watch(hasJoined, (joined) => {
     travelStarfieldDown(starfieldTravelMs)
   }
   showSidebar.value = joined
-  if (joined) {
-    void nextTick().then(() => {
-      updateGameGridColumns()
-    })
-  } else {
+  if (!joined) {
     showGameList.value = true
     showGameArea.value = false
     pendingGameId.value = null
@@ -208,9 +179,7 @@ watch(hasJoined, (joined) => {
 
 watch(
   () => games.length,
-  async () => {
-    await nextTick()
-    updateGameGridColumns()
+  () => {
     if (showGameList.value) {
       scheduleGameHoverEnable()
     }
@@ -244,10 +213,6 @@ onBeforeUnmount(() => {
   if (gameHoverTimer) {
     window.clearTimeout(gameHoverTimer)
     gameHoverTimer = null
-  }
-  if (gridResizeObserver) {
-    gridResizeObserver.disconnect()
-    gridResizeObserver = null
   }
 })
 </script>
@@ -298,7 +263,6 @@ onBeforeUnmount(() => {
           class="game-grid"
           appear
           :style="animationVars"
-          ref="gameGridRef"
         >
           <article
             v-for="(game, index) in visibleGames"
