@@ -56,13 +56,29 @@ const gameGridRef = ref<HTMLElement | null>(null)
 let namePromptTimer: number | null = null
 let presenceAnimationFrame: number | null = null
 let gridResizeObserver: ResizeObserver | null = null
+let gameTransitionTimer: number | null = null
+let gameHoverTimer: number | null = null
 const showNamePrompt = ref(false)
 const showSidebar = ref(false)
+const showGameList = ref(true)
+const showGameArea = ref(false)
+const pendingGameId = ref<string | null>(null)
+const isGameTransitioning = ref(false)
+const allowGameHover = ref(false)
 const starfieldTravelMs = 1500
+const gameTransitionTravelMs = starfieldTravelMs * 2
 const animationLeadMs = 200
 const animationStartDelayMs = Math.max(starfieldTravelMs - animationLeadMs, 0)
 const animationVars = { '--animation-start-delay': `${animationStartDelayMs}ms` }
 const gameGridColumns = ref(1)
+const visibleGames = computed(() => (showGameList.value ? games : []))
+const gameTitleLeaveDelayMs = computed(() => {
+  const totalCards = games.length
+  const lastDelay = totalCards > 0 ? (totalCards - 1) * 90 : 0
+  const leaveDuration = 520
+  const earlyOffset = 200
+  return Math.max(lastDelay + leaveDuration - earlyOffset, 0)
+})
 
 async function submitName() {
   if (!connection.value || !isConnected.value || !connection.value.connectionId) {
@@ -91,6 +107,50 @@ function getGameDelay(index: number) {
   const row = Math.floor(index / columns)
   const col = index % columns
   return (row * columns + col) * 90
+}
+
+function getGameLeaveDelay(index: number) {
+  const columns = gameGridColumns.value || 1
+  const row = Math.floor(index / columns)
+  const col = index % columns
+  const order = row * columns + col
+  const total = games.length
+  const reverseOrder = Math.max(total - 1 - order, 0)
+  return reverseOrder * 90
+}
+
+function scheduleGameHoverEnable() {
+  if (gameHoverTimer) {
+    window.clearTimeout(gameHoverTimer)
+  }
+  const totalCards = games.length
+  const lastDelay = totalCards > 0 ? (totalCards - 1) * 90 : 0
+  const entranceDuration = 520
+  const totalDelay = animationStartDelayMs + lastDelay + entranceDuration
+  allowGameHover.value = false
+  gameHoverTimer = window.setTimeout(() => {
+    allowGameHover.value = true
+    gameHoverTimer = null
+  }, totalDelay)
+}
+
+function handleGameSelect(gameId: string) {
+  if (isGameTransitioning.value || activeGame.value) return
+  pendingGameId.value = gameId
+  isGameTransitioning.value = true
+  showGameList.value = false
+  travelStarfieldDown(gameTransitionTravelMs)
+  if (gameTransitionTimer) {
+    window.clearTimeout(gameTransitionTimer)
+  }
+  gameTransitionTimer = window.setTimeout(() => {
+    if (pendingGameId.value) {
+      selectGame(pendingGameId.value)
+    }
+    showGameArea.value = true
+    isGameTransitioning.value = false
+    gameTransitionTimer = null
+  }, gameTransitionTravelMs)
 }
 
 onMounted(() => {
@@ -137,6 +197,12 @@ watch(hasJoined, (joined) => {
     void nextTick().then(() => {
       updateGameGridColumns()
     })
+  } else {
+    showGameList.value = true
+    showGameArea.value = false
+    pendingGameId.value = null
+    isGameTransitioning.value = false
+    allowGameHover.value = false
   }
 })
 
@@ -145,8 +211,23 @@ watch(
   async () => {
     await nextTick()
     updateGameGridColumns()
+    if (showGameList.value) {
+      scheduleGameHoverEnable()
+    }
   },
 )
+
+watch(showGameList, (visible) => {
+  if (visible) {
+    scheduleGameHoverEnable()
+  } else {
+    allowGameHover.value = false
+    if (gameHoverTimer) {
+      window.clearTimeout(gameHoverTimer)
+      gameHoverTimer = null
+    }
+  }
+})
 
 onBeforeUnmount(() => {
   if (namePromptTimer) {
@@ -155,6 +236,14 @@ onBeforeUnmount(() => {
   if (presenceAnimationFrame) {
     window.cancelAnimationFrame(presenceAnimationFrame)
     presenceAnimationFrame = null
+  }
+  if (gameTransitionTimer) {
+    window.clearTimeout(gameTransitionTimer)
+    gameTransitionTimer = null
+  }
+  if (gameHoverTimer) {
+    window.clearTimeout(gameHoverTimer)
+    gameHoverTimer = null
   }
   if (gridResizeObserver) {
     gridResizeObserver.disconnect()
@@ -186,16 +275,25 @@ onBeforeUnmount(() => {
 
     <section class="room-main">
       <section v-if="hasJoined && !activeGame" class="panel game-panel">
-        <Transition name="game-deal" appear>
-          <div class="game-header" :style="{ transitionDelay: `${animationStartDelayMs}ms` }">
-            <div>
-              <div class="game-title">Choose a game</div>
-            </div>
+        <div class="game-header">
+          <div>
+            <Transition name="games" appear>
+              <div
+                v-if="showGameList"
+                class="game-title"
+                :style="{
+                  '--games-delay': `${animationStartDelayMs}ms`,
+                  '--games-title-leave-delay': `${gameTitleLeaveDelayMs}ms`,
+                }"
+              >
+                Choose a game
+              </div>
+            </Transition>
           </div>
-        </Transition>
+        </div>
 
         <TransitionGroup
-          name="game-deal"
+          name="games"
           tag="div"
           class="game-grid"
           appear
@@ -203,15 +301,19 @@ onBeforeUnmount(() => {
           ref="gameGridRef"
         >
           <article
-            v-for="(game, index) in games"
+            v-for="(game, index) in visibleGames"
             :key="game.id"
             class="game-card"
+            :class="{ 'hover-ready': allowGameHover }"
             role="button"
             tabindex="0"
-            :style="{ '--deal-delay': `${animationStartDelayMs + getGameDelay(index)}ms` }"
-            @click="selectGame(game.id)"
-            @keydown.enter="selectGame(game.id)"
-            @keydown.space.prevent="selectGame(game.id)"
+            :style="{
+              '--games-delay': `${animationStartDelayMs + getGameDelay(index)}ms`,
+              '--games-leave-delay': `${getGameLeaveDelay(index)}ms`,
+            }"
+            @click="handleGameSelect(game.id)"
+            @keydown.enter="handleGameSelect(game.id)"
+            @keydown.space.prevent="handleGameSelect(game.id)"
           >
             <div class="game-card-body">
               <div class="game-card-title">{{ game.title }}</div>
@@ -226,9 +328,11 @@ onBeforeUnmount(() => {
         </TransitionGroup>
       </section>
 
-      <section v-if="hasJoined && activeGame" class="game-area">
-        <component :is="activeGame.component" />
-      </section>
+      <Transition name="game-area-fade">
+        <section v-if="hasJoined && activeGame && showGameArea" class="game-area">
+          <component :is="activeGame.component" />
+        </section>
+      </Transition>
     </section>
 
     <Transition name="name-dialog">
@@ -332,32 +436,41 @@ onBeforeUnmount(() => {
   transform: translateX(0);
 }
 
-.game-deal-enter-active {
+.games-enter-active,
+.games-appear-active,
+.games-leave-active {
   transition: opacity 520ms ease, transform 520ms ease;
 }
 
-.game-deal-appear-active {
-  transition: opacity 520ms ease, transform 520ms ease;
-}
-
-.game-deal-enter-from {
+.games-enter-from,
+.games-appear-from {
   opacity: 0;
   transform: translateY(18px);
 }
 
-.game-deal-appear-from {
+.games-enter-to,
+.games-appear-to {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.games-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.games-leave-to {
   opacity: 0;
-  transform: translateY(18px);
+  transform: translateY(100px);
 }
 
-.game-deal-enter-to {
-  opacity: 1;
-  transform: translateY(0);
+.game-title.games-enter-active,
+.game-title.games-appear-active {
+  transition-delay: var(--games-delay, 0ms);
 }
 
-.game-deal-appear-to {
-  opacity: 1;
-  transform: translateY(0);
+.game-title.games-leave-active {
+  transition-delay: var(--games-title-leave-delay, 0ms);
 }
 
 .room-main {
@@ -421,6 +534,7 @@ header h1 {
 .game-header {
   display: grid;
   gap: 6px;
+  min-height: 28px;
 }
 
 .game-title {
@@ -448,15 +562,32 @@ header h1 {
   transition: transform 160ms ease, box-shadow 160ms ease;
 }
 
-.game-card:hover {
+.game-card.hover-ready:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
-.game-card.game-deal-enter-active,
-.game-card.game-deal-appear-active {
+.game-card.games-enter-active,
+.game-card.games-appear-active {
   transition: opacity 520ms ease, transform 520ms ease;
-  transition-delay: var(--deal-delay, 0ms);
+  transition-delay: var(--games-delay, 0ms);
+}
+
+.game-card.games-leave-active {
+  transition: opacity 520ms ease, transform 520ms ease;
+  transition-delay: var(--games-leave-delay, 0ms);
+}
+
+.game-area-fade-enter-active {
+  transition: opacity 420ms ease;
+}
+
+.game-area-fade-enter-from {
+  opacity: 0;
+}
+
+.game-area-fade-enter-to {
+  opacity: 1;
 }
 
 .game-thumb {
