@@ -4,4 +4,17 @@ POST {{Server_HostAddress}}/api/rooms
 Accept: application/json
 
 ###
+
+# TODO: Call start turn here
+POST {{Server_HostAddress}}/api/engine/turn-based-game/start-turn
+Content-Type: application/json
+Accept: application/json
+
+{
+  "gameId": "game-1",
+  "playerId": "player-1"
+}
+
+
+###
 ### WebSocket: ws://localhost:5023/api/rooms/{room-id}/ws

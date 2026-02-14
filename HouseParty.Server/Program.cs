@@ -1,3 +1,6 @@
+using HouseParty.GameEngine.Archetypes;
+using HouseParty.GameEngine.Operations;
+using HouseParty.GameEngine.Primitives;
 using HouseParty.Server.Services;
 using Microsoft.Azure.SignalR.Management;
 
@@ -11,6 +14,15 @@ builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddSingleton<RoomService>();
 builder.Services.AddSingleton<RoomSignalRService>();
+
+// Primitives
+builder.Services.AddSingleton<IPrimitives, Primitives>();
+
+// Operations
+builder.Services.AddSingleton<IExclusiveOperations, ExclusiveOperations>();
+
+// Archetypes
+builder.Services.AddSingleton<ITurnBasedGame, TurnBasedGame>();
 
 builder.Services.AddCors(options =>
 {

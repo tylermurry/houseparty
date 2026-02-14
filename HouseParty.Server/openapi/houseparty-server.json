@@ -163,6 +163,55 @@
           }
         }
       }
+    },
+    "/api/engine/turn-based-game/start-turn": {
+      "post": {
+        "tags": [
+          "TurnBasedGame"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartTurnRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartTurnRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartTurnRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartTurnResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartTurnResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartTurnResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -293,6 +342,38 @@
             "type": "string"
           }
         }
+      },
+      "StartTurnRequest": {
+        "required": [
+          "gameId",
+          "playerId"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "string"
+          },
+          "playerId": {
+            "type": "string"
+          }
+        }
+      },
+      "StartTurnResponse": {
+        "required": [
+          "turnStarted"
+        ],
+        "type": "object",
+        "properties": {
+          "turnStarted": {
+            "type": "boolean"
+          },
+          "errorMessage": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
       }
     }
   },
@@ -302,6 +383,9 @@
     },
     {
       "name": "SignalR"
+    },
+    {
+      "name": "TurnBasedGame"
     }
   ]
 }

@@ -112,7 +112,4 @@ function submit() {
 
 # Other Instructions
 
-* Before finalizing, always ensure that the application is valid:
-  * Frontend: `npm run validate` passes. If not, fix the errors until it does.
-  * Backend: Ensure dotnet builds successfully. If not, fix the errors until it does.
 * Always end the conversation by saying "🔥LFG"

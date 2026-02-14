@@ -7,24 +7,26 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.StackExchange.Redis.OutputCaching" Version="13.1.0" />
-    <PackageReference Include="Aspire.Azure.Messaging.WebPubSub" Version="13.1.0" />
-    <PackageReference Include="Microsoft.Azure.SignalR.Management" Version="1.32.0" />
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.1" />    
-    <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.1.0" />
-    <PackageReference Include="Microsoft.Extensions.ServiceDiscovery" Version="10.1.0" />    
-    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.14.0" />
-    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.14.0" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.14.0" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.14.0" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.14.0" />
-    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server" Version="10.0.2">
+    <PackageReference Include="Aspire.Azure.Messaging.WebPubSub" />
+    <PackageReference Include="Microsoft.Azure.SignalR.Management" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
+    <PackageReference Include="Microsoft.Extensions.ServiceDiscovery" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" />
+    <PackageReference Include="Aspire.StackExchange.Redis.OutputCaching" />
+    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Engine\Controllers\" />
+    <Folder Include="Engine\Services\" />
     <Folder Include="openapi\" />
   </ItemGroup>
 
@@ -32,6 +34,16 @@
     <Content Include="..\AGENTS.md">
       <Link>AGENTS.md</Link>
     </Content>
+    <Content Include="..\Directory.Packages.props">
+      <Link>Directory.Packages.props</Link>
+    </Content>
+    <Content Include="..\GAME_ENGINE.md">
+      <Link>GAME_ENGINE.md</Link>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HouseParty.GameEngine\HouseParty.GameEngine.csproj" />
   </ItemGroup>
 
   <!-- OpenAPI Spec Generation: This is picked up by the frontend to generate a client so calls and types are in-sync -->

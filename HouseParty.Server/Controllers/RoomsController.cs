@@ -30,9 +30,9 @@ public sealed class RoomsController(RoomService service, RoomSignalRService sign
             return BadRequest("Name is required.");
         }
 
-        await signalR.AddToRoomAsync(roomId, request.ConnectionId, cancellationToken);
+        await signalR.AddToRoom(roomId, request.ConnectionId, cancellationToken);
         var joinResult = await service.JoinRoomAsync(roomId, request.Name, request.PlayerNumber);
-        await signalR.BroadcastPlayersAsync(roomId, joinResult.Players, cancellationToken);
+        await signalR.BroadcastPlayers(roomId, joinResult.Players, cancellationToken);
 
         return Ok(new RoomJoined(joinResult.Player, joinResult.Players));
     }
@@ -55,7 +55,7 @@ public sealed class RoomsController(RoomService service, RoomSignalRService sign
             return BadRequest("Mouse coordinates are out of range.");
         }
 
-        await signalR.BroadcastMousePresenceAsync(roomId, request, cancellationToken);
+        await signalR.BroadcastMousePresence(roomId, request, cancellationToken);
         return Accepted();
     }
 }

@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { PostApiRoomsByRoomIdJoinData, PostApiRoomsByRoomIdJoinResponses, PostApiRoomsByRoomIdMouseData, PostApiRoomsByRoomIdMouseResponses, PostApiRoomsData, PostApiRoomsResponses, PostApiSignalrNegotiateData, PostApiSignalrNegotiateResponses } from './types.gen';
+import type { GetApiEngineTurnBasedGameStateData, GetApiEngineTurnBasedGameStateResponses, PostApiEngineTurnBasedGameEndGameData, PostApiEngineTurnBasedGameEndGameResponses, PostApiEngineTurnBasedGameResetData, PostApiEngineTurnBasedGameResetResponses, PostApiEngineTurnBasedGameResolveData, PostApiEngineTurnBasedGameResolveResponses, PostApiEngineTurnBasedGameStartTurnData, PostApiEngineTurnBasedGameStartTurnResponses, PostApiEngineTurnBasedGameSubmitMoveData, PostApiEngineTurnBasedGameSubmitMoveResponses, PostApiRoomsByRoomIdJoinData, PostApiRoomsByRoomIdJoinResponses, PostApiRoomsByRoomIdMouseData, PostApiRoomsByRoomIdMouseResponses, PostApiRoomsData, PostApiRoomsResponses, PostApiSignalrNegotiateData, PostApiSignalrNegotiateResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -17,6 +17,53 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
      */
     meta?: Record<string, unknown>;
 };
+
+export const postApiEngineTurnBasedGameStartTurn = <ThrowOnError extends boolean = false>(options: Options<PostApiEngineTurnBasedGameStartTurnData, ThrowOnError>) => (options.client ?? client).post<PostApiEngineTurnBasedGameStartTurnResponses, unknown, ThrowOnError>({
+    url: '/api/engine/turn-based-game/start-turn',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const postApiEngineTurnBasedGameSubmitMove = <ThrowOnError extends boolean = false>(options: Options<PostApiEngineTurnBasedGameSubmitMoveData, ThrowOnError>) => (options.client ?? client).post<PostApiEngineTurnBasedGameSubmitMoveResponses, unknown, ThrowOnError>({
+    url: '/api/engine/turn-based-game/submit-move',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const postApiEngineTurnBasedGameResolve = <ThrowOnError extends boolean = false>(options: Options<PostApiEngineTurnBasedGameResolveData, ThrowOnError>) => (options.client ?? client).post<PostApiEngineTurnBasedGameResolveResponses, unknown, ThrowOnError>({
+    url: '/api/engine/turn-based-game/resolve',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const postApiEngineTurnBasedGameEndGame = <ThrowOnError extends boolean = false>(options: Options<PostApiEngineTurnBasedGameEndGameData, ThrowOnError>) => (options.client ?? client).post<PostApiEngineTurnBasedGameEndGameResponses, unknown, ThrowOnError>({
+    url: '/api/engine/turn-based-game/end-game',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const postApiEngineTurnBasedGameReset = <ThrowOnError extends boolean = false>(options: Options<PostApiEngineTurnBasedGameResetData, ThrowOnError>) => (options.client ?? client).post<PostApiEngineTurnBasedGameResetResponses, unknown, ThrowOnError>({
+    url: '/api/engine/turn-based-game/reset',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const getApiEngineTurnBasedGameState = <ThrowOnError extends boolean = false>(options?: Options<GetApiEngineTurnBasedGameStateData, ThrowOnError>) => (options?.client ?? client).get<GetApiEngineTurnBasedGameStateResponses, unknown, ThrowOnError>({ url: '/api/engine/turn-based-game/state', ...options });
 
 export const postApiRooms = <ThrowOnError extends boolean = false>(options?: Options<PostApiRoomsData, ThrowOnError>) => (options?.client ?? client).post<PostApiRoomsResponses, unknown, ThrowOnError>({ url: '/api/rooms', ...options });
 

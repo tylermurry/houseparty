@@ -4,11 +4,54 @@ export type ClientOptions = {
     baseUrl: `${string}://${string}` | (string & {});
 };
 
+export type CommitResponse = {
+    committed: boolean;
+    revision: number | string;
+};
+
+export type GameData = {
+    revision: number | string;
+    data: null | JsonElement;
+};
+
+export type GameEvent = {
+    sequence: number | string;
+    name: string;
+    playerId: string;
+    timestamp: number | string;
+    payload: null | JsonElement;
+};
+
+export type GameLifecycleRequest = {
+    gameId: string;
+    playerId: string;
+};
+
+export type GameStateResponse = {
+    locks: Array<LockEntry>;
+    events: Array<GameEvent>;
+    data: GameData;
+};
+
+export type JsonElement = unknown;
+
+export type LockEntry = {
+    tokenId: string;
+    holderId: string;
+};
+
 export type MousePresenceUpdate = {
     playerNumber: number | string;
     name: string;
     x: number | string;
     y: number | string;
+};
+
+export type ResolveRequest = {
+    gameId: string;
+    playerId: string;
+    baseRevision: number | string;
+    data: JsonElement;
 };
 
 export type RoomCreated = {
@@ -35,6 +78,120 @@ export type SignalRNegotiation = {
     url: string;
     accessToken: string;
 };
+
+export type StartTurnRequest = {
+    gameId: string;
+    playerId: string;
+    tokenId: null | string;
+};
+
+export type SubmitMoveRequest = {
+    gameId: string;
+    playerId: string;
+    eventName: string;
+    payload: null | JsonElement;
+};
+
+export type TokenResult = {
+    acquired: boolean;
+    holderId: null | string;
+};
+
+export type PostApiEngineTurnBasedGameStartTurnData = {
+    body: StartTurnRequest;
+    path?: never;
+    query?: never;
+    url: '/api/engine/turn-based-game/start-turn';
+};
+
+export type PostApiEngineTurnBasedGameStartTurnResponses = {
+    /**
+     * OK
+     */
+    200: TokenResult;
+};
+
+export type PostApiEngineTurnBasedGameStartTurnResponse = PostApiEngineTurnBasedGameStartTurnResponses[keyof PostApiEngineTurnBasedGameStartTurnResponses];
+
+export type PostApiEngineTurnBasedGameSubmitMoveData = {
+    body: SubmitMoveRequest;
+    path?: never;
+    query?: never;
+    url: '/api/engine/turn-based-game/submit-move';
+};
+
+export type PostApiEngineTurnBasedGameSubmitMoveResponses = {
+    /**
+     * OK
+     */
+    200: GameEvent;
+};
+
+export type PostApiEngineTurnBasedGameSubmitMoveResponse = PostApiEngineTurnBasedGameSubmitMoveResponses[keyof PostApiEngineTurnBasedGameSubmitMoveResponses];
+
+export type PostApiEngineTurnBasedGameResolveData = {
+    body: ResolveRequest;
+    path?: never;
+    query?: never;
+    url: '/api/engine/turn-based-game/resolve';
+};
+
+export type PostApiEngineTurnBasedGameResolveResponses = {
+    /**
+     * OK
+     */
+    200: CommitResponse;
+};
+
+export type PostApiEngineTurnBasedGameResolveResponse = PostApiEngineTurnBasedGameResolveResponses[keyof PostApiEngineTurnBasedGameResolveResponses];
+
+export type PostApiEngineTurnBasedGameEndGameData = {
+    body: GameLifecycleRequest;
+    path?: never;
+    query?: never;
+    url: '/api/engine/turn-based-game/end-game';
+};
+
+export type PostApiEngineTurnBasedGameEndGameResponses = {
+    /**
+     * OK
+     */
+    200: GameEvent;
+};
+
+export type PostApiEngineTurnBasedGameEndGameResponse = PostApiEngineTurnBasedGameEndGameResponses[keyof PostApiEngineTurnBasedGameEndGameResponses];
+
+export type PostApiEngineTurnBasedGameResetData = {
+    body: GameLifecycleRequest;
+    path?: never;
+    query?: never;
+    url: '/api/engine/turn-based-game/reset';
+};
+
+export type PostApiEngineTurnBasedGameResetResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetApiEngineTurnBasedGameStateData = {
+    body?: never;
+    path?: never;
+    query?: {
+        gameId?: string;
+    };
+    url: '/api/engine/turn-based-game/state';
+};
+
+export type GetApiEngineTurnBasedGameStateResponses = {
+    /**
+     * OK
+     */
+    200: GameStateResponse;
+};
+
+export type GetApiEngineTurnBasedGameStateResponse = GetApiEngineTurnBasedGameStateResponses[keyof GetApiEngineTurnBasedGameStateResponses];
 
 export type PostApiRoomsData = {
     body?: never;
