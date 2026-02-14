@@ -6,7 +6,7 @@ namespace HouseParty.Server.Controllers;
 
 [ApiController]
 [Route("api/rooms")]
-public sealed class RoomsController(RoomService service, RoomSignalRService signalR) : ControllerBase
+public sealed class RoomsController(RoomService service, IRoomSignalRService signalR) : ControllerBase
 {
     [HttpPost]
     public async Task<ActionResult<RoomCreated>> CreateRoom()

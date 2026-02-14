@@ -164,6 +164,55 @@
         }
       }
     },
+    "/api/engine/turn-based-game/start-game": {
+      "post": {
+        "tags": [
+          "TurnBasedGame"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartGameRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartGameRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartGameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartGameResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartGameResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartGameResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/engine/turn-based-game/start-turn": {
       "post": {
         "tags": [
@@ -340,6 +389,38 @@
           },
           "accessToken": {
             "type": "string"
+          }
+        }
+      },
+      "StartGameRequest": {
+        "required": [
+          "gameId",
+          "playerId"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "string"
+          },
+          "playerId": {
+            "type": "string"
+          }
+        }
+      },
+      "StartGameResponse": {
+        "required": [
+          "gameStarted"
+        ],
+        "type": "object",
+        "properties": {
+          "gameStarted": {
+            "type": "boolean"
+          },
+          "errorMessage": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },

@@ -4,7 +4,17 @@ using Microsoft.Azure.SignalR.Management;
 
 namespace HouseParty.Server.Services;
 
-public sealed class RoomSignalRService : IAsyncDisposable
+public interface IRoomSignalRService : IAsyncDisposable
+{
+    SignalRNegotiation Negotiate();
+    Task AddToRoom(string roomId, string connectionId, CancellationToken cancellationToken);
+    Task BroadcastPlayers(string roomId, IReadOnlyList<RoomPlayer> players, CancellationToken cancellationToken);
+    Task BroadcastMousePresence(string roomId, MousePresenceUpdate update, CancellationToken cancellationToken);
+    Task BroadcastGameEvent(string roomId, object payload, CancellationToken cancellationToken);
+    Task BroadcastGameStateSnapshot(string roomId, object payload, CancellationToken cancellationToken);
+}
+
+public class RoomSignalRService : IRoomSignalRService
 {
     private const string HubName = "room";
     private readonly IServiceManager serviceManager;

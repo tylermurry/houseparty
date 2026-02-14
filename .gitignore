@@ -6,3 +6,9 @@
 /HouseParty.AppHost/bin/**
 /HouseParty.Server/obj/**
 /HouseParty.Server/bin/**
+/HouseParty.Server.Tests/obj/**
+/HouseParty.Server.Tests/bin/**
+/HouseParty.GameEngine/bin/**
+/HouseParty.GameEngine/obj/**
+/HouseParty.GameEngine.Tests/bin/**
+/HouseParty.GameEngine.Tests/obj/**

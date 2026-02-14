@@ -6,7 +6,7 @@ namespace HouseParty.Server.Controllers;
 
 [ApiController]
 [Route("api/signalr")]
-public sealed class SignalRController(RoomSignalRService signalR) : ControllerBase
+public sealed class SignalRController(IRoomSignalRService signalR) : ControllerBase
 {
     [HttpPost("negotiate")]
     public ActionResult<SignalRNegotiation> Negotiate()

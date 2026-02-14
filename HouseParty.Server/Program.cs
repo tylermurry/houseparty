@@ -13,7 +13,7 @@ builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddSingleton<RoomService>();
-builder.Services.AddSingleton<RoomSignalRService>();
+builder.Services.AddSingleton<IRoomSignalRService, RoomSignalRService>();
 
 // Primitives
 builder.Services.AddSingleton<IPrimitives, Primitives>();
@@ -22,6 +22,7 @@ builder.Services.AddSingleton<IPrimitives, Primitives>();
 builder.Services.AddSingleton<IExclusiveOperations, ExclusiveOperations>();
 
 // Archetypes
+builder.Services.AddSingleton<IBaseGame, BaseGame>();
 builder.Services.AddSingleton<ITurnBasedGame, TurnBasedGame>();
 
 builder.Services.AddCors(options =>
