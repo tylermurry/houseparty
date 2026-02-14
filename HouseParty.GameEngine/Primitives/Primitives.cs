@@ -22,14 +22,14 @@ public interface IPrimitives
 
 public sealed class Primitives(IConnectionMultiplexer redis) : IPrimitives
 {
-    private static readonly TimeSpan DefaultTtl = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan DefaultTtl = TimeSpan.FromSeconds(-1);
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     public async Task<TokenResult> AcquireTokenAsync(string gameId, string tokenId, string holderId, TimeSpan? ttl = null)
     {
         var db = redis.GetDatabase();
         var key = PrimitiveKeys.TokenKey(gameId, tokenId);
-        var acquired = await db.StringSetAsync(key, holderId, ttl ?? DefaultTtl, When.NotExists);
+        var acquired = await db.StringSetAsync(key, holderId, when: When.NotExists);
 
         if (acquired)
             await db.SetAddAsync(PrimitiveKeys.TokensKey(gameId), tokenId);

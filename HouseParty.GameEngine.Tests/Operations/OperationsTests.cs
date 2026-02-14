@@ -1,4 +1,5 @@
 using FluentAssertions;
+using HouseParty.GameEngine.Archetypes;
 using HouseParty.GameEngine.Models;
 using HouseParty.GameEngine.Primitives;
 using Moq;
@@ -10,7 +11,6 @@ public sealed class OperationsTests
     private const string GameId = "game-1";
     private const string PlayerId = "player-1";
     private const string OtherPlayerId = "player-2";
-    private const string AdminRoleId = "admin-role";
     private const long Now = 123456789L;
 
     private readonly Mock<IPrimitives> _primitives = new(MockBehavior.Strict);
@@ -22,7 +22,7 @@ public sealed class OperationsTests
         var service = new TestOperations(_primitives.Object);
 
         _primitives
-            .Setup(p => p.GetTokenHolderAsync(GameId, AdminRoleId))
+            .Setup(p => p.GetTokenHolderAsync(GameId, BaseGame.AdminRoleId))
             .ReturnsAsync(OtherPlayerId);
 
         var result = await service.ClearTokensPublic(_context);
@@ -38,7 +38,7 @@ public sealed class OperationsTests
         var service = new TestOperations(_primitives.Object);
 
         _primitives
-            .Setup(p => p.GetTokenHolderAsync(GameId, AdminRoleId))
+            .Setup(p => p.GetTokenHolderAsync(GameId, BaseGame.AdminRoleId))
             .ReturnsAsync(PlayerId);
         _primitives
             .Setup(p => p.ClearTokensAsync(GameId))
@@ -80,7 +80,7 @@ public sealed class OperationsTests
         var service = new TestOperations(_primitives.Object);
 
         _primitives
-            .Setup(p => p.GetTokenHolderAsync(GameId, AdminRoleId))
+            .Setup(p => p.GetTokenHolderAsync(GameId, BaseGame.AdminRoleId))
             .ReturnsAsync(OtherPlayerId);
 
         var result = await service.ClearEventsPublic(_context);
@@ -96,7 +96,7 @@ public sealed class OperationsTests
         var service = new TestOperations(_primitives.Object);
 
         _primitives
-            .Setup(p => p.GetTokenHolderAsync(GameId, AdminRoleId))
+            .Setup(p => p.GetTokenHolderAsync(GameId, BaseGame.AdminRoleId))
             .ReturnsAsync(PlayerId);
         _primitives
             .Setup(p => p.ClearEventsAsync(GameId))
@@ -130,7 +130,7 @@ public sealed class OperationsTests
         var service = new TestOperations(_primitives.Object);
 
         _primitives
-            .Setup(p => p.GetTokenHolderAsync(GameId, AdminRoleId))
+            .Setup(p => p.GetTokenHolderAsync(GameId, BaseGame.AdminRoleId))
             .ReturnsAsync(OtherPlayerId);
 
         var result = await service.ClearDataPublic(_context);
@@ -146,7 +146,7 @@ public sealed class OperationsTests
         var service = new TestOperations(_primitives.Object);
 
         _primitives
-            .Setup(p => p.GetTokenHolderAsync(GameId, AdminRoleId))
+            .Setup(p => p.GetTokenHolderAsync(GameId, BaseGame.AdminRoleId))
             .ReturnsAsync(PlayerId);
         _primitives
             .Setup(p => p.ClearDataAsync(GameId))

@@ -394,14 +394,10 @@
       },
       "StartGameRequest": {
         "required": [
-          "gameId",
           "playerId"
         ],
         "type": "object",
         "properties": {
-          "gameId": {
-            "type": "string"
-          },
           "playerId": {
             "type": "string"
           }
@@ -415,6 +411,12 @@
         "properties": {
           "gameStarted": {
             "type": "boolean"
+          },
+          "gameId": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "errorMessage": {
             "type": [

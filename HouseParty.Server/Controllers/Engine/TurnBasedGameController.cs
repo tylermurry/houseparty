@@ -4,25 +4,25 @@ using HouseParty.GameEngine.Models.Exchange;
 using HouseParty.Server.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace HouseParty.Server.Controllers;
+namespace HouseParty.Server.Controllers.Engine;
 
 [ApiController]
 [Route("api/engine/turn-based-game")]
-public sealed class TurnBasedGameController(IBaseGame baseGame, ITurnBasedGame turnBasedGame, IRoomSignalRService signalR) : ControllerBase
+public sealed class TurnBasedGameController(ITurnBasedGame turnBasedGame, IRoomSignalRService signalR) : ControllerBase
 {
     [HttpPost("start-game")]
     public async Task<BaseGameExchanges.StartGameResponse> StartGame([FromBody] BaseGameExchanges.StartGameRequest request)
     {
         try
         {
-            var gameEvents = await baseGame.StartGame(new OperationContext(request.GameId, request.PlayerId, Now()));
-            await BroadcastAllEvents(request.GameId, gameEvents);
+            var startGameResult = await turnBasedGame.StartGame(request.PlayerId, Now());
+            await BroadcastAllEvents(startGameResult.GameId, startGameResult.Events);
 
-            return new BaseGameExchanges.StartGameResponse(true);
+            return new BaseGameExchanges.StartGameResponse(true, startGameResult.GameId);
         }
         catch (Exception ex)
         {
-            return new BaseGameExchanges.StartGameResponse(false, ex.Message);
+            return new BaseGameExchanges.StartGameResponse(false, null, ex.Message);
         }
     }
 

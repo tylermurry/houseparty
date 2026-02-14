@@ -1,4 +1,5 @@
 using FluentAssertions;
+using HouseParty.GameEngine.Archetypes;
 using HouseParty.GameEngine.Models;
 using HouseParty.GameEngine.Operations;
 using HouseParty.GameEngine.Primitives;
@@ -13,7 +14,6 @@ public sealed class ExclusiveOperationsTests
     private const string OtherPlayerId = "player-2";
     private const string ObjectId = "object-1";
     private const string ActivePlayerTokenId = "active-player";
-    private const string AdminRoleId = "admin-role";
     private const string RoleId = "judge-role";
     private const long Now = 123456789L;
 
@@ -121,7 +121,7 @@ public sealed class ExclusiveOperationsTests
     public async Task RevokeObjectControl_Fails_WhenCallerIsNotAdmin()
     {
         _tokens
-            .Setup(p => p.GetTokenHolderAsync(GameId, AdminRoleId))
+            .Setup(p => p.GetTokenHolderAsync(GameId, BaseGame.AdminRoleId))
             .ReturnsAsync(OtherPlayerId);
 
         var result = await _operations.RevokeObjectControl(_context, ObjectId);
@@ -134,7 +134,7 @@ public sealed class ExclusiveOperationsTests
     public async Task RevokeObjectControl_Fails_WhenReleaseFails()
     {
         _tokens
-            .Setup(p => p.GetTokenHolderAsync(GameId, AdminRoleId))
+            .Setup(p => p.GetTokenHolderAsync(GameId, BaseGame.AdminRoleId))
             .ReturnsAsync(PlayerId);
         _tokens
             .Setup(p => p.ReleaseTokenAsync(GameId, ObjectId))
@@ -157,7 +157,7 @@ public sealed class ExclusiveOperationsTests
         };
 
         _tokens
-            .Setup(p => p.GetTokenHolderAsync(GameId, AdminRoleId))
+            .Setup(p => p.GetTokenHolderAsync(GameId, BaseGame.AdminRoleId))
             .ReturnsAsync(PlayerId);
         _tokens
             .Setup(p => p.ReleaseTokenAsync(GameId, ObjectId))
@@ -261,7 +261,7 @@ public sealed class ExclusiveOperationsTests
     public async Task RevokeActivePlayerAsync_Fails_WhenCallerIsNotAdmin()
     {
         _tokens
-            .Setup(p => p.GetTokenHolderAsync(GameId, AdminRoleId))
+            .Setup(p => p.GetTokenHolderAsync(GameId, BaseGame.AdminRoleId))
             .ReturnsAsync(OtherPlayerId);
 
         var result = await _operations.RevokeActivePlayerAsync(_context);
@@ -274,7 +274,7 @@ public sealed class ExclusiveOperationsTests
     public async Task RevokeActivePlayerAsync_Fails_WhenReleaseFails()
     {
         _tokens
-            .Setup(p => p.GetTokenHolderAsync(GameId, AdminRoleId))
+            .Setup(p => p.GetTokenHolderAsync(GameId, BaseGame.AdminRoleId))
             .ReturnsAsync(PlayerId);
         _tokens
             .Setup(p => p.ReleaseTokenAsync(GameId, ActivePlayerTokenId))
@@ -297,7 +297,7 @@ public sealed class ExclusiveOperationsTests
         };
 
         _tokens
-            .Setup(p => p.GetTokenHolderAsync(GameId, AdminRoleId))
+            .Setup(p => p.GetTokenHolderAsync(GameId, BaseGame.AdminRoleId))
             .ReturnsAsync(PlayerId);
         _tokens
             .Setup(p => p.ReleaseTokenAsync(GameId, ActivePlayerTokenId))
@@ -401,7 +401,7 @@ public sealed class ExclusiveOperationsTests
     public async Task RevokeRoleAsync_Fails_WhenCallerIsNotAdmin()
     {
         _tokens
-            .Setup(p => p.GetTokenHolderAsync(GameId, AdminRoleId))
+            .Setup(p => p.GetTokenHolderAsync(GameId, BaseGame.AdminRoleId))
             .ReturnsAsync(OtherPlayerId);
 
         var result = await _operations.RevokeRoleAsync(_context, RoleId);
@@ -414,7 +414,7 @@ public sealed class ExclusiveOperationsTests
     public async Task RevokeRoleAsync_Fails_WhenReleaseFails()
     {
         _tokens
-            .Setup(p => p.GetTokenHolderAsync(GameId, AdminRoleId))
+            .Setup(p => p.GetTokenHolderAsync(GameId, BaseGame.AdminRoleId))
             .ReturnsAsync(PlayerId);
         _tokens
             .Setup(p => p.ReleaseTokenAsync(GameId, RoleId))
@@ -437,7 +437,7 @@ public sealed class ExclusiveOperationsTests
         };
 
         _tokens
-            .Setup(p => p.GetTokenHolderAsync(GameId, AdminRoleId))
+            .Setup(p => p.GetTokenHolderAsync(GameId, BaseGame.AdminRoleId))
             .ReturnsAsync(PlayerId);
         _tokens
             .Setup(p => p.ReleaseTokenAsync(GameId, RoleId))

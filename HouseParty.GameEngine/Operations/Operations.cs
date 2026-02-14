@@ -1,3 +1,4 @@
+using HouseParty.GameEngine.Archetypes;
 using HouseParty.GameEngine.Models;
 using HouseParty.GameEngine.Primitives;
 
@@ -6,8 +7,6 @@ namespace HouseParty.GameEngine.Operations;
 public abstract class Operations(IPrimitives primitives)
 {
     protected const string ActivePlayerTokenId = "active-player";
-
-    private const string AdminRoleId = "admin-role";
 
     protected async Task<OperationResult> SendGameEventAndBuildSuccessfulOperationResult(OperationContext context, GameEvent gameEvent)
     {
@@ -28,7 +27,7 @@ public abstract class Operations(IPrimitives primitives)
         return string.Equals(holderId, context.PlayerId, StringComparison.Ordinal);
     }
 
-    protected Task<bool> IsPlayerAdminRole(OperationContext context) => IsTokenHeldByPlayer(context, AdminRoleId);
+    protected Task<bool> IsPlayerAdminRole(OperationContext context) => IsTokenHeldByPlayer(context, BaseGame.AdminRoleId);
 
     protected async Task<bool> ClearTokens(OperationContext context)
     {

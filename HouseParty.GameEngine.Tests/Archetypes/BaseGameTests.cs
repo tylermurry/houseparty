@@ -2,18 +2,15 @@ using FluentAssertions;
 using HouseParty.GameEngine.Archetypes;
 using HouseParty.GameEngine.Models;
 using HouseParty.GameEngine.Operations;
+using HouseParty.GameEngine.Primitives;
 using Moq;
 
 namespace HouseParty.GameEngine.Tests.Archetypes;
 
 public sealed class BaseGameTests
 {
-    private const string GameId = "game-1";
     private const string PlayerId = "player-1";
-    private const string AdminRoleId = "admin-role";
     private const long Now = 123456789L;
-
-    private readonly OperationContext _context = new(GameId, PlayerId, Now);
 
     [Fact]
     public async Task StartGame_Succeeds_WhenAdminRoleCanBeClaimed()
@@ -28,32 +25,46 @@ public sealed class BaseGameTests
             }
         };
 
+        OperationContext? claimRoleContext = null;
+
         var operations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
+        var primitives = new Mock<IPrimitives>(MockBehavior.Strict);
         operations
-            .Setup(x => x.ClaimRole(_context, AdminRoleId))
+            .Setup(x => x.ClaimRole(It.IsAny<OperationContext>(), BaseGame.AdminRoleId))
+            .Callback<OperationContext, string>((context, _) => claimRoleContext = context)
             .ReturnsAsync(new OperationResult(true, expectedEvents));
 
-        var baseGame = new BaseGame(operations.Object);
+        var baseGame = new BaseGame(operations.Object, primitives.Object);
 
-        var result = await baseGame.StartGame(_context);
+        var result = await baseGame.StartGame(PlayerId, Now);
 
-        result.Should().Equal(expectedEvents);
+        claimRoleContext.Should().NotBeNull();
+        claimRoleContext!.PlayerId.Should().Be(PlayerId);
+        claimRoleContext.Now.Should().Be(Now);
+        Guid.TryParse(claimRoleContext.GameId, out _).Should().BeTrue();
+
+        result.GameId.Should().Be(claimRoleContext.GameId);
+        result.Events.Should().Equal(expectedEvents);
+
         operations.VerifyAll();
+        primitives.VerifyAll();
     }
 
     [Fact]
     public async Task StartGame_Throws_WhenAdminRoleCannotBeClaimed()
     {
         var operations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
+        var primitives = new Mock<IPrimitives>(MockBehavior.Strict);
         operations
-            .Setup(x => x.ClaimRole(_context, AdminRoleId))
+            .Setup(x => x.ClaimRole(It.IsAny<OperationContext>(), BaseGame.AdminRoleId))
             .ReturnsAsync(new OperationResult(false, []));
 
-        var baseGame = new BaseGame(operations.Object);
+        var baseGame = new BaseGame(operations.Object, primitives.Object);
 
-        var act = () => baseGame.StartGame(_context);
+        var act = () => baseGame.StartGame(PlayerId, Now);
 
         await act.Should().ThrowAsync<Exception>().WithMessage("Game already started");
         operations.VerifyAll();
+        primitives.VerifyAll();
     }
 }
