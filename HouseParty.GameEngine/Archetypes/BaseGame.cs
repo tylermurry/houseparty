@@ -9,6 +9,7 @@ public sealed record StartGameResult(string GameId, List<GameEvent> Events);
 public interface IBaseGame
 {
     Task<StartGameResult> StartGame(string playerId, long now);
+    Task<List<GameEvent>> StopGame(OperationContext context);
 }
 
 public class BaseGame(IExclusiveOperations exclusiveOperations, IPrimitives primitives) : IBaseGame
@@ -33,5 +34,20 @@ public class BaseGame(IExclusiveOperations exclusiveOperations, IPrimitives prim
     {
         var adminRoleHolder = await primitives.GetTokenHolderAsync(context.GameId, AdminRoleId);
         return !string.IsNullOrWhiteSpace(adminRoleHolder);
+    }
+
+    public async Task<List<GameEvent>> StopGame(OperationContext context)
+    {
+        var adminRoleHolder = await primitives.GetTokenHolderAsync(context.GameId, AdminRoleId);
+
+        if (string.IsNullOrWhiteSpace(adminRoleHolder))
+            throw new Exception("Game not started");
+
+        if (!string.Equals(adminRoleHolder, context.PlayerId, StringComparison.Ordinal))
+            throw new Exception("Only admin can stop game");
+
+        await primitives.ClearGameAsync(context.GameId);
+
+        return [];
     }
 }

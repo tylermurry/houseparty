@@ -261,6 +261,55 @@
           }
         }
       }
+    },
+    "/api/engine/turn-based-game/stop-game": {
+      "post": {
+        "tags": [
+          "TurnBasedGame"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StopGameRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StopGameRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/StopGameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/StopGameResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StopGameResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StopGameResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -448,6 +497,38 @@
         "type": "object",
         "properties": {
           "turnStarted": {
+            "type": "boolean"
+          },
+          "errorMessage": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "StopGameRequest": {
+        "required": [
+          "gameId",
+          "playerId"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "string"
+          },
+          "playerId": {
+            "type": "string"
+          }
+        }
+      },
+      "StopGameResponse": {
+        "required": [
+          "gameStopped"
+        ],
+        "type": "object",
+        "properties": {
+          "gameStopped": {
             "type": "boolean"
           },
           "errorMessage": {

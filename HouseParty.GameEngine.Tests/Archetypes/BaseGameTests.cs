@@ -9,8 +9,10 @@ namespace HouseParty.GameEngine.Tests.Archetypes;
 
 public sealed class BaseGameTests
 {
+    private const string GameId = "game-1";
     private const string PlayerId = "player-1";
     private const long Now = 123456789L;
+    private readonly OperationContext _context = new(GameId, PlayerId, Now);
 
     [Fact]
     public async Task StartGame_Succeeds_WhenAdminRoleCanBeClaimed()
@@ -64,6 +66,66 @@ public sealed class BaseGameTests
         var act = () => baseGame.StartGame(PlayerId, Now);
 
         await act.Should().ThrowAsync<Exception>().WithMessage("Game already started");
+        operations.VerifyAll();
+        primitives.VerifyAll();
+    }
+
+    [Fact]
+    public async Task StopGame_Throws_WhenGameNotStarted()
+    {
+        var operations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
+        var primitives = new Mock<IPrimitives>(MockBehavior.Strict);
+
+        primitives
+            .Setup(x => x.GetTokenHolderAsync(GameId, BaseGame.AdminRoleId))
+            .ReturnsAsync((string?)null);
+
+        var baseGame = new BaseGame(operations.Object, primitives.Object);
+
+        var act = () => baseGame.StopGame(_context);
+
+        await act.Should().ThrowAsync<Exception>().WithMessage("Game not started");
+        operations.VerifyAll();
+        primitives.VerifyAll();
+    }
+
+    [Fact]
+    public async Task StopGame_Throws_WhenPlayerIsNotAdmin()
+    {
+        var operations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
+        var primitives = new Mock<IPrimitives>(MockBehavior.Strict);
+
+        primitives
+            .Setup(x => x.GetTokenHolderAsync(GameId, BaseGame.AdminRoleId))
+            .ReturnsAsync("host-player");
+
+        var baseGame = new BaseGame(operations.Object, primitives.Object);
+
+        var act = () => baseGame.StopGame(_context);
+
+        await act.Should().ThrowAsync<Exception>().WithMessage("Only admin can stop game");
+        operations.VerifyAll();
+        primitives.VerifyAll();
+    }
+
+    [Fact]
+    public async Task StopGame_Succeeds_WhenCalledByAdmin_AndClearsGameData()
+    {
+        var operations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
+        var primitives = new Mock<IPrimitives>(MockBehavior.Strict);
+
+        primitives
+            .Setup(x => x.GetTokenHolderAsync(GameId, BaseGame.AdminRoleId))
+            .ReturnsAsync(PlayerId);
+        primitives
+            .Setup(x => x.ClearGameAsync(GameId))
+            .Returns(Task.CompletedTask);
+
+        var baseGame = new BaseGame(operations.Object, primitives.Object);
+
+        var events = await baseGame.StopGame(_context);
+
+        events.Should().BeEmpty();
         operations.VerifyAll();
         primitives.VerifyAll();
     }

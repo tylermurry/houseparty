@@ -20,7 +20,18 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "gameId": "---",
+  "gameId": "gameId",
+  "playerId": "player-2"
+}
+
+### Stop Game
+
+POST {{Server_HostAddress}}/api/engine/turn-based-game/stop-game
+Content-Type: application/json
+Accept: application/json
+
+{
+  "gameId": "gameId",
   "playerId": "player-1"
 }
 

@@ -156,4 +156,65 @@ public sealed class PrimitivesTests(RedisFixture redisFixture)
         cleared.Revision.Should().Be(0);
         cleared.Data.Should().BeNull();
     }
+
+    [Fact]
+    public async Task Test_ClearGame_RemovesAllKnownGameKeys()
+    {
+        await _service.AcquireTokenAsync(_gameId, _tokenId, "holder-a");
+        await _service.AppendOrderedEventAsync(_gameId, new ControlObjectEvent("object-1")
+        {
+            PlayerId = "player-1",
+            Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+        });
+        await _service.SetDataAsync(_gameId, 0, JsonSerializer.Serialize(new MockData("running", 10)));
+
+        await _service.ClearGameAsync(_gameId);
+
+        var db = redisFixture.Connection.GetDatabase();
+        var tokenHolder = await _service.GetTokenHolderAsync(_gameId, _tokenId);
+        var events = await _service.GetEventsAsync(_gameId);
+        var data = await _service.GetDataAsync(_gameId);
+
+        tokenHolder.Should().BeNull();
+        events.Should().BeEmpty();
+        data.Revision.Should().Be(0);
+        data.Data.Should().BeNull();
+
+        (await db.KeyExistsAsync($"game:{_gameId}:tokens")).Should().BeFalse();
+        (await db.KeyExistsAsync($"game:{_gameId}:events")).Should().BeFalse();
+        (await db.KeyExistsAsync($"game:{_gameId}:events:seq")).Should().BeFalse();
+        (await db.KeyExistsAsync($"game:{_gameId}:data")).Should().BeFalse();
+        (await db.KeyExistsAsync($"game:{_gameId}:data:rev")).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Test_DefaultTtl_IsAppliedToAllWrittenKeys()
+    {
+        await _service.AcquireTokenAsync(_gameId, _tokenId, "holder-a");
+        await _service.AppendOrderedEventAsync(_gameId, new ControlObjectEvent("object-1")
+        {
+            PlayerId = "player-1",
+            Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+        });
+        await _service.SetDataAsync(_gameId, 0, JsonSerializer.Serialize(new MockData("running", 10)));
+
+        var db = redisFixture.Connection.GetDatabase();
+        var keys = new[]
+        {
+            $"game:{_gameId}:token:{_tokenId}",
+            $"game:{_gameId}:tokens",
+            $"game:{_gameId}:events",
+            $"game:{_gameId}:events:seq",
+            $"game:{_gameId}:data",
+            $"game:{_gameId}:data:rev"
+        };
+
+        foreach (var key in keys)
+        {
+            var ttl = await db.KeyTimeToLiveAsync(key);
+            ttl.Should().NotBeNull();
+            ttl!.Value.Should().BeGreaterThan(TimeSpan.FromHours(23));
+            ttl.Value.Should().BeLessThanOrEqualTo(TimeSpan.FromHours(24));
+        }
+    }
 }

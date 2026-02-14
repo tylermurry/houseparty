@@ -145,4 +145,5 @@ public sealed class TurnBasedGameTests
         exclusiveOperations.VerifyAll();
         primitives.VerifyAll();
     }
+
 }

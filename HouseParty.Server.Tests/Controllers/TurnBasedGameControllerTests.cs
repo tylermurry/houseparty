@@ -86,4 +86,45 @@ public sealed class TurnBasedGameControllerTests
         signalR.BroadcastCalls.Should().BeEmpty();
         turnBasedGame.VerifyAll();
     }
+
+    [Fact]
+    public async Task StopGame_ReturnsSuccess_WhenGameIsStopped()
+    {
+        var gameEvents = new List<GameEvent>();
+
+        var turnBasedGame = new Mock<ITurnBasedGame>(MockBehavior.Strict);
+        turnBasedGame
+            .Setup(x => x.StopGame(It.Is<OperationContext>(context => context.GameId == GameId && context.PlayerId == PlayerId)))
+            .ReturnsAsync(gameEvents);
+
+        var signalR = new FakeRoomSignalRService();
+        var controller = new TurnBasedGameController(turnBasedGame.Object, signalR);
+
+        var result = await controller.StopGame(new BaseGameExchanges.StopGameRequest(GameId, PlayerId));
+
+        result.GameStopped.Should().BeTrue();
+        result.ErrorMessage.Should().BeNull();
+        signalR.BroadcastCalls.Should().BeEmpty();
+
+        turnBasedGame.VerifyAll();
+    }
+
+    [Fact]
+    public async Task StopGame_ReturnsFailure_WhenStopGameThrows()
+    {
+        var turnBasedGame = new Mock<ITurnBasedGame>(MockBehavior.Strict);
+        turnBasedGame
+            .Setup(x => x.StopGame(It.Is<OperationContext>(context => context.GameId == GameId && context.PlayerId == PlayerId)))
+            .ThrowsAsync(new Exception("Could not stop game"));
+
+        var signalR = new FakeRoomSignalRService();
+        var controller = new TurnBasedGameController(turnBasedGame.Object, signalR);
+
+        var result = await controller.StopGame(new BaseGameExchanges.StopGameRequest(GameId, PlayerId));
+
+        result.GameStopped.Should().BeFalse();
+        result.ErrorMessage.Should().Be("Could not stop game");
+        signalR.BroadcastCalls.Should().BeEmpty();
+        turnBasedGame.VerifyAll();
+    }
 }

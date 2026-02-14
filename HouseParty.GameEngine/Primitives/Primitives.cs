@@ -18,21 +18,27 @@ public interface IPrimitives
     Task<CommitResult> SetDataAsync(string gameId, long baseRevision, string data);
     Task<GameData> GetDataAsync(string gameId);
     Task ClearDataAsync(string gameId);
+    Task ClearGameAsync(string gameId);
 }
 
 public sealed class Primitives(IConnectionMultiplexer redis) : IPrimitives
 {
-    private static readonly TimeSpan DefaultTtl = TimeSpan.FromSeconds(-1);
+    private static readonly TimeSpan DefaultTtl = TimeSpan.FromHours(24);
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     public async Task<TokenResult> AcquireTokenAsync(string gameId, string tokenId, string holderId, TimeSpan? ttl = null)
     {
         var db = redis.GetDatabase();
         var key = PrimitiveKeys.TokenKey(gameId, tokenId);
-        var acquired = await db.StringSetAsync(key, holderId, when: When.NotExists);
+        var effectiveTtl = ttl ?? DefaultTtl;
+        var acquired = await db.StringSetAsync(key, holderId, effectiveTtl, when: When.NotExists);
 
         if (acquired)
-            await db.SetAddAsync(PrimitiveKeys.TokensKey(gameId), tokenId);
+        {
+            var tokensKey = PrimitiveKeys.TokensKey(gameId);
+            await db.SetAddAsync(tokensKey, tokenId);
+            await db.KeyExpireAsync(tokensKey, DefaultTtl);
+        }
 
         RedisValue owner = acquired ? holderId : await db.StringGetAsync(key);
         return new TokenResult(acquired, owner.HasValue ? owner.ToString() : null);
@@ -73,10 +79,15 @@ public sealed class Primitives(IConnectionMultiplexer redis) : IPrimitives
     public async Task<GameEvent> AppendOrderedEventAsync(string gameId, GameEvent gameEvent)
     {
         var db = redis.GetDatabase();
-        gameEvent.Sequence = await db.StringIncrementAsync(PrimitiveKeys.EventsSequenceKey(gameId));
+        var eventsSequenceKey = PrimitiveKeys.EventsSequenceKey(gameId);
+        var eventsKey = PrimitiveKeys.EventsKey(gameId);
+
+        gameEvent.Sequence = await db.StringIncrementAsync(eventsSequenceKey);
         var json = JsonSerializer.Serialize(gameEvent, JsonOptions);
 
-        await db.ListRightPushAsync(PrimitiveKeys.EventsKey(gameId), json);
+        await db.ListRightPushAsync(eventsKey, json);
+        await db.KeyExpireAsync(eventsSequenceKey, DefaultTtl);
+        await db.KeyExpireAsync(eventsKey, DefaultTtl);
 
         return gameEvent;
     }
@@ -123,7 +134,11 @@ public sealed class Primitives(IConnectionMultiplexer redis) : IPrimitives
         _ = transaction.StringSetAsync(revisionKey, nextRevision);
 
         if (await transaction.ExecuteAsync())
+        {
+            await db.KeyExpireAsync(dataKey, DefaultTtl);
+            await db.KeyExpireAsync(revisionKey, DefaultTtl);
             return new CommitResult(true, nextRevision);
+        }
 
         var currentRevisionValue = await db.StringGetAsync(revisionKey);
         var currentRevision = currentRevisionValue.HasValue && long.TryParse(currentRevisionValue.ToString(), out var parsed)
@@ -152,6 +167,13 @@ public sealed class Primitives(IConnectionMultiplexer redis) : IPrimitives
         var db = redis.GetDatabase();
         await db.KeyDeleteAsync(PrimitiveKeys.DataKey(gameId));
         await db.KeyDeleteAsync(PrimitiveKeys.DataRevisionKey(gameId));
+    }
+
+    public async Task ClearGameAsync(string gameId)
+    {
+        await ClearTokensAsync(gameId);
+        await ClearEventsAsync(gameId);
+        await ClearDataAsync(gameId);
     }
 }
 

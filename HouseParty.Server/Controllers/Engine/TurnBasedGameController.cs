@@ -42,6 +42,22 @@ public sealed class TurnBasedGameController(ITurnBasedGame turnBasedGame, IRoomS
         }
     }
 
+    [HttpPost("stop-game")]
+    public async Task<BaseGameExchanges.StopGameResponse> StopGame([FromBody] BaseGameExchanges.StopGameRequest request)
+    {
+        try
+        {
+            var gameEvents = await turnBasedGame.StopGame(new OperationContext(request.GameId, request.PlayerId, Now()));
+            await BroadcastAllEvents(request.GameId, gameEvents);
+
+            return new BaseGameExchanges.StopGameResponse(true);
+        }
+        catch (Exception ex)
+        {
+            return new BaseGameExchanges.StopGameResponse(false, ex.Message);
+        }
+    }
+
     private async Task BroadcastAllEvents(string roomId, List<GameEvent> events)
     {
         foreach (var gameEvent in events)
