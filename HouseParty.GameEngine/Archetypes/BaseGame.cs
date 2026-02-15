@@ -1,6 +1,5 @@
 using HouseParty.GameEngine.Models;
 using HouseParty.GameEngine.Operations;
-using HouseParty.GameEngine.Primitives;
 
 namespace HouseParty.GameEngine.Archetypes;
 
@@ -12,17 +11,18 @@ public interface IBaseGame
     Task<List<GameEvent>> StopGame(OperationContext context);
 }
 
-public class BaseGame(IExclusiveOperations exclusiveOperations, IPrimitives primitives) : IBaseGame
+public class BaseGame(
+    IExclusiveOperations exclusiveOperations,
+    IGameOperations gameOperations,
+    IPolicies policies
+) : IBaseGame
 {
-    public const string AdminRoleId = "admin-role";
-    protected IExclusiveOperations ExclusiveOperations { get; } = exclusiveOperations;
-
     public async Task<StartGameResult> StartGame(string playerId, long now)
     {
         var gameId = Guid.NewGuid().ToString("n");
         var context = new OperationContext(gameId, playerId, now);
 
-        var claimRoleResult = await ExclusiveOperations.ClaimRole(context, AdminRoleId);
+        var claimRoleResult = await exclusiveOperations.ClaimRole(context, Policies.AdminRoleId);
 
         if (!claimRoleResult.Succeeded)
             throw new Exception("Game already started");
@@ -30,23 +30,16 @@ public class BaseGame(IExclusiveOperations exclusiveOperations, IPrimitives prim
         return new StartGameResult(gameId, [..claimRoleResult.Events]);
     }
 
-    protected async Task<bool> IsGameStarted(OperationContext context)
-    {
-        var adminRoleHolder = await primitives.GetTokenHolderAsync(context.GameId, AdminRoleId);
-        return !string.IsNullOrWhiteSpace(adminRoleHolder);
-    }
-
     public async Task<List<GameEvent>> StopGame(OperationContext context)
     {
-        var adminRoleHolder = await primitives.GetTokenHolderAsync(context.GameId, AdminRoleId);
-
-        if (string.IsNullOrWhiteSpace(adminRoleHolder))
+        if (! await policies.IsGameStarted(context.GameId))
             throw new Exception("Game not started");
 
-        if (!string.Equals(adminRoleHolder, context.PlayerId, StringComparison.Ordinal))
+        if (! await policies.IsPlayerAdminRole(context.GameId, context.PlayerId))
             throw new Exception("Only admin can stop game");
 
-        await primitives.ClearGameAsync(context.GameId);
+        if (! await gameOperations.ClearGame(context))
+            throw new Exception("Failed to clear game data");
 
         return [];
     }

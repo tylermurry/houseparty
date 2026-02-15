@@ -2,7 +2,6 @@ using FluentAssertions;
 using HouseParty.GameEngine.Archetypes;
 using HouseParty.GameEngine.Models;
 using HouseParty.GameEngine.Operations;
-using HouseParty.GameEngine.Primitives;
 using Moq;
 
 namespace HouseParty.GameEngine.Tests.Archetypes;
@@ -29,14 +28,16 @@ public sealed class BaseGameTests
 
         OperationContext? claimRoleContext = null;
 
-        var operations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
-        var primitives = new Mock<IPrimitives>(MockBehavior.Strict);
-        operations
-            .Setup(x => x.ClaimRole(It.IsAny<OperationContext>(), BaseGame.AdminRoleId))
+        var exclusiveOperations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
+        var gameOperations = new Mock<IGameOperations>(MockBehavior.Strict);
+        var policies = new Mock<IPolicies>(MockBehavior.Strict);
+
+        exclusiveOperations
+            .Setup(x => x.ClaimRole(It.IsAny<OperationContext>(), Policies.AdminRoleId))
             .Callback<OperationContext, string>((context, _) => claimRoleContext = context)
             .ReturnsAsync(new OperationResult(true, expectedEvents));
 
-        var baseGame = new BaseGame(operations.Object, primitives.Object);
+        var baseGame = new BaseGame(exclusiveOperations.Object, gameOperations.Object, policies.Object);
 
         var result = await baseGame.StartGame(PlayerId, Now);
 
@@ -48,85 +49,110 @@ public sealed class BaseGameTests
         result.GameId.Should().Be(claimRoleContext.GameId);
         result.Events.Should().Equal(expectedEvents);
 
-        operations.VerifyAll();
-        primitives.VerifyAll();
+        exclusiveOperations.VerifyAll();
+        gameOperations.VerifyAll();
+        policies.VerifyAll();
     }
 
     [Fact]
     public async Task StartGame_Throws_WhenAdminRoleCannotBeClaimed()
     {
-        var operations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
-        var primitives = new Mock<IPrimitives>(MockBehavior.Strict);
-        operations
-            .Setup(x => x.ClaimRole(It.IsAny<OperationContext>(), BaseGame.AdminRoleId))
+        var exclusiveOperations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
+        var gameOperations = new Mock<IGameOperations>(MockBehavior.Strict);
+        var policies = new Mock<IPolicies>(MockBehavior.Strict);
+
+        exclusiveOperations
+            .Setup(x => x.ClaimRole(It.IsAny<OperationContext>(), Policies.AdminRoleId))
             .ReturnsAsync(new OperationResult(false, []));
 
-        var baseGame = new BaseGame(operations.Object, primitives.Object);
+        var baseGame = new BaseGame(exclusiveOperations.Object, gameOperations.Object, policies.Object);
 
         var act = () => baseGame.StartGame(PlayerId, Now);
 
         await act.Should().ThrowAsync<Exception>().WithMessage("Game already started");
-        operations.VerifyAll();
-        primitives.VerifyAll();
+        exclusiveOperations.VerifyAll();
+        gameOperations.VerifyAll();
+        policies.VerifyAll();
     }
 
     [Fact]
     public async Task StopGame_Throws_WhenGameNotStarted()
     {
-        var operations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
-        var primitives = new Mock<IPrimitives>(MockBehavior.Strict);
+        var exclusiveOperations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
+        var gameOperations = new Mock<IGameOperations>(MockBehavior.Strict);
+        var policies = new Mock<IPolicies>(MockBehavior.Strict);
 
-        primitives
-            .Setup(x => x.GetTokenHolderAsync(GameId, BaseGame.AdminRoleId))
-            .ReturnsAsync((string?)null);
+        policies.Setup(x => x.IsGameStarted(GameId)).ReturnsAsync(false);
 
-        var baseGame = new BaseGame(operations.Object, primitives.Object);
+        var baseGame = new BaseGame(exclusiveOperations.Object, gameOperations.Object, policies.Object);
 
         var act = () => baseGame.StopGame(_context);
 
         await act.Should().ThrowAsync<Exception>().WithMessage("Game not started");
-        operations.VerifyAll();
-        primitives.VerifyAll();
+        exclusiveOperations.VerifyAll();
+        gameOperations.VerifyAll();
+        policies.VerifyAll();
     }
 
     [Fact]
     public async Task StopGame_Throws_WhenPlayerIsNotAdmin()
     {
-        var operations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
-        var primitives = new Mock<IPrimitives>(MockBehavior.Strict);
+        var exclusiveOperations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
+        var gameOperations = new Mock<IGameOperations>(MockBehavior.Strict);
+        var policies = new Mock<IPolicies>(MockBehavior.Strict);
 
-        primitives
-            .Setup(x => x.GetTokenHolderAsync(GameId, BaseGame.AdminRoleId))
-            .ReturnsAsync("host-player");
+        policies.Setup(x => x.IsGameStarted(GameId)).ReturnsAsync(true);
+        policies.Setup(x => x.IsPlayerAdminRole(GameId, PlayerId)).ReturnsAsync(false);
 
-        var baseGame = new BaseGame(operations.Object, primitives.Object);
+        var baseGame = new BaseGame(exclusiveOperations.Object, gameOperations.Object, policies.Object);
 
         var act = () => baseGame.StopGame(_context);
 
         await act.Should().ThrowAsync<Exception>().WithMessage("Only admin can stop game");
-        operations.VerifyAll();
-        primitives.VerifyAll();
+        exclusiveOperations.VerifyAll();
+        gameOperations.VerifyAll();
+        policies.VerifyAll();
     }
 
     [Fact]
-    public async Task StopGame_Succeeds_WhenCalledByAdmin_AndClearsGameData()
+    public async Task StopGame_Throws_WhenClearGameFails()
     {
-        var operations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
-        var primitives = new Mock<IPrimitives>(MockBehavior.Strict);
+        var exclusiveOperations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
+        var gameOperations = new Mock<IGameOperations>(MockBehavior.Strict);
+        var policies = new Mock<IPolicies>(MockBehavior.Strict);
 
-        primitives
-            .Setup(x => x.GetTokenHolderAsync(GameId, BaseGame.AdminRoleId))
-            .ReturnsAsync(PlayerId);
-        primitives
-            .Setup(x => x.ClearGameAsync(GameId))
-            .Returns(Task.CompletedTask);
+        policies.Setup(x => x.IsGameStarted(GameId)).ReturnsAsync(true);
+        policies.Setup(x => x.IsPlayerAdminRole(GameId, PlayerId)).ReturnsAsync(true);
+        gameOperations.Setup(x => x.ClearGame(_context)).ReturnsAsync(false);
 
-        var baseGame = new BaseGame(operations.Object, primitives.Object);
+        var baseGame = new BaseGame(exclusiveOperations.Object, gameOperations.Object, policies.Object);
+
+        var act = () => baseGame.StopGame(_context);
+
+        await act.Should().ThrowAsync<Exception>().WithMessage("Failed to clear game data");
+        exclusiveOperations.VerifyAll();
+        gameOperations.VerifyAll();
+        policies.VerifyAll();
+    }
+
+    [Fact]
+    public async Task StopGame_Succeeds_WhenCalledByAdmin_AndClearGameSucceeds()
+    {
+        var exclusiveOperations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
+        var gameOperations = new Mock<IGameOperations>(MockBehavior.Strict);
+        var policies = new Mock<IPolicies>(MockBehavior.Strict);
+
+        policies.Setup(x => x.IsGameStarted(GameId)).ReturnsAsync(true);
+        policies.Setup(x => x.IsPlayerAdminRole(GameId, PlayerId)).ReturnsAsync(true);
+        gameOperations.Setup(x => x.ClearGame(_context)).ReturnsAsync(true);
+
+        var baseGame = new BaseGame(exclusiveOperations.Object, gameOperations.Object, policies.Object);
 
         var events = await baseGame.StopGame(_context);
 
         events.Should().BeEmpty();
-        operations.VerifyAll();
-        primitives.VerifyAll();
+        exclusiveOperations.VerifyAll();
+        gameOperations.VerifyAll();
+        policies.VerifyAll();
     }
 }

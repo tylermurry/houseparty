@@ -20,7 +20,7 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "gameId": "gameId",
+  "gameId": "c8bdae2af70241efb0aa960eba853680",
   "playerId": "player-2"
 }
 
@@ -31,9 +31,18 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "gameId": "gameId",
+  "gameId": "c8bdae2af70241efb0aa960eba853680",
   "playerId": "player-1"
 }
 
-###
-### WebSocket: ws://localhost:5023/api/rooms/{room-id}/ws
+### Make Move
+
+POST {{Server_HostAddress}}/api/engine/turn-based-game/make-move
+Content-Type: application/json
+Accept: application/json
+
+{
+  "gameId": "c8bdae2af70241efb0aa960eba853680",
+  "playerId": "player-2",
+  "movePayload": "attack:slot-2"
+}

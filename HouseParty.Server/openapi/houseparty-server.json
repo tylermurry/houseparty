@@ -213,6 +213,55 @@
         }
       }
     },
+    "/api/engine/turn-based-game/stop-game": {
+      "post": {
+        "tags": [
+          "TurnBasedGame"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StopGameRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StopGameRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/StopGameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/StopGameResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StopGameResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StopGameResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/engine/turn-based-game/start-turn": {
       "post": {
         "tags": [
@@ -262,7 +311,7 @@
         }
       }
     },
-    "/api/engine/turn-based-game/stop-game": {
+    "/api/engine/turn-based-game/make-move": {
       "post": {
         "tags": [
           "TurnBasedGame"
@@ -271,17 +320,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/StopGameRequest"
+                "$ref": "#/components/schemas/MakeMoveRequest"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/StopGameRequest"
+                "$ref": "#/components/schemas/MakeMoveRequest"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/StopGameRequest"
+                "$ref": "#/components/schemas/MakeMoveRequest"
               }
             }
           },
@@ -293,17 +342,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/StopGameResponse"
+                  "$ref": "#/components/schemas/MakeMoveResponse"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/StopGameResponse"
+                  "$ref": "#/components/schemas/MakeMoveResponse"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/StopGameResponse"
+                  "$ref": "#/components/schemas/MakeMoveResponse"
                 }
               }
             }
@@ -314,6 +363,42 @@
   },
   "components": {
     "schemas": {
+      "MakeMoveRequest": {
+        "required": [
+          "gameId",
+          "playerId",
+          "movePayload"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "string"
+          },
+          "playerId": {
+            "type": "string"
+          },
+          "movePayload": {
+            "type": "string"
+          }
+        }
+      },
+      "MakeMoveResponse": {
+        "required": [
+          "moveAccepted"
+        ],
+        "type": "object",
+        "properties": {
+          "moveAccepted": {
+            "type": "boolean"
+          },
+          "errorMessage": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "MousePresenceUpdate": {
         "required": [
           "playerNumber",

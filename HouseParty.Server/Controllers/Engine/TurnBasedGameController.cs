@@ -26,6 +26,22 @@ public sealed class TurnBasedGameController(ITurnBasedGame turnBasedGame, IRoomS
         }
     }
 
+    [HttpPost("stop-game")]
+    public async Task<BaseGameExchanges.StopGameResponse> StopGame([FromBody] BaseGameExchanges.StopGameRequest request)
+    {
+        try
+        {
+            var gameEvents = await turnBasedGame.StopGame(new OperationContext(request.GameId, request.PlayerId, Now()));
+            await BroadcastAllEvents(request.GameId, gameEvents);
+
+            return new BaseGameExchanges.StopGameResponse(true);
+        }
+        catch (Exception ex)
+        {
+            return new BaseGameExchanges.StopGameResponse(false, ex.Message);
+        }
+    }
+
     [HttpPost("start-turn")]
     public async Task<TurnBasedGameExchanges.StartTurnResponse> StartTurn([FromBody] TurnBasedGameExchanges.StartTurnRequest request)
     {
@@ -42,19 +58,19 @@ public sealed class TurnBasedGameController(ITurnBasedGame turnBasedGame, IRoomS
         }
     }
 
-    [HttpPost("stop-game")]
-    public async Task<BaseGameExchanges.StopGameResponse> StopGame([FromBody] BaseGameExchanges.StopGameRequest request)
+    [HttpPost("make-move")]
+    public async Task<TurnBasedGameExchanges.MakeMoveResponse> MakeMove([FromBody] TurnBasedGameExchanges.MakeMoveRequest request)
     {
         try
         {
-            var gameEvents = await turnBasedGame.StopGame(new OperationContext(request.GameId, request.PlayerId, Now()));
+            var gameEvents = await turnBasedGame.MakeMove(new OperationContext(request.GameId, request.PlayerId, Now()), request.MovePayload);
             await BroadcastAllEvents(request.GameId, gameEvents);
 
-            return new BaseGameExchanges.StopGameResponse(true);
+            return new TurnBasedGameExchanges.MakeMoveResponse(true);
         }
         catch (Exception ex)
         {
-            return new BaseGameExchanges.StopGameResponse(false, ex.Message);
+            return new TurnBasedGameExchanges.MakeMoveResponse(false, ex.Message);
         }
     }
 

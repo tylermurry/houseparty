@@ -1,3 +1,4 @@
+using HouseParty.GameEngine;
 using HouseParty.GameEngine.Archetypes;
 using HouseParty.GameEngine.Operations;
 using HouseParty.GameEngine.Primitives;
@@ -14,12 +15,15 @@ builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddSingleton<RoomService>();
 builder.Services.AddSingleton<IRoomSignalRService, RoomSignalRService>();
+builder.Services.AddSingleton<IPolicies, Policies>();
 
 // Primitives
 builder.Services.AddSingleton<IPrimitives, Primitives>();
 
 // Operations
+builder.Services.AddSingleton<IGameOperations, GameOperations>();
 builder.Services.AddSingleton<IExclusiveOperations, ExclusiveOperations>();
+builder.Services.AddSingleton<IContestedOperations, ContestedOperations>();
 
 // Archetypes
 builder.Services.AddSingleton<IBaseGame, BaseGame>();

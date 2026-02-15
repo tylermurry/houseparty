@@ -18,7 +18,6 @@ public interface IPrimitives
     Task<CommitResult> SetDataAsync(string gameId, long baseRevision, string data);
     Task<GameData> GetDataAsync(string gameId);
     Task ClearDataAsync(string gameId);
-    Task ClearGameAsync(string gameId);
 }
 
 public sealed class Primitives(IConnectionMultiplexer redis) : IPrimitives
@@ -167,13 +166,6 @@ public sealed class Primitives(IConnectionMultiplexer redis) : IPrimitives
         var db = redis.GetDatabase();
         await db.KeyDeleteAsync(PrimitiveKeys.DataKey(gameId));
         await db.KeyDeleteAsync(PrimitiveKeys.DataRevisionKey(gameId));
-    }
-
-    public async Task ClearGameAsync(string gameId)
-    {
-        await ClearTokensAsync(gameId);
-        await ClearEventsAsync(gameId);
-        await ClearDataAsync(gameId);
     }
 }
 
