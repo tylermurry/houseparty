@@ -6,6 +6,7 @@ namespace HouseParty.Server.Tests.Utils;
 public sealed class FakeRoomSignalRService : IRoomSignalRService
 {
     public List<(string RoomId, object Payload)> BroadcastCalls { get; } = [];
+    public List<(string RoomId, object Payload)> StateSnapshotBroadcastCalls { get; } = [];
 
     public SignalRNegotiation Negotiate() => throw new NotImplementedException();
 
@@ -24,8 +25,11 @@ public sealed class FakeRoomSignalRService : IRoomSignalRService
         return Task.CompletedTask;
     }
 
-    public Task BroadcastGameStateSnapshot(string roomId, object payload, CancellationToken cancellationToken) =>
-        throw new NotImplementedException();
+    public Task BroadcastGameStateSnapshot(string roomId, object payload, CancellationToken cancellationToken)
+    {
+        StateSnapshotBroadcastCalls.Add((roomId, payload));
+        return Task.CompletedTask;
+    }
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }

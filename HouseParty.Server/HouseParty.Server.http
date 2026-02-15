@@ -1,48 +1,64 @@
 @Server_HostAddress = http://localhost:5407
+@GameId = d6c08adf313841c791415f7ace547f5b
+@PlayerId = player-1
 
 POST {{Server_HostAddress}}/api/rooms
 Accept: application/json
 
-### Start Game
+### --- Start Game -----------------------------------------------------------------
 
 POST {{Server_HostAddress}}/api/engine/turn-based-game/start-game
 Content-Type: application/json
 Accept: application/json
 
 {
-  "playerId": "player-1"
+  "playerId": "{{PlayerId}}"
 }
 
-### Start Turn
-
-POST {{Server_HostAddress}}/api/engine/turn-based-game/start-turn
-Content-Type: application/json
-Accept: application/json
-
-{
-  "gameId": "c8bdae2af70241efb0aa960eba853680",
-  "playerId": "player-2"
-}
-
-### Stop Game
+### --- Stop Game -----------------------------------------------------------------
 
 POST {{Server_HostAddress}}/api/engine/turn-based-game/stop-game
 Content-Type: application/json
 Accept: application/json
 
 {
-  "gameId": "c8bdae2af70241efb0aa960eba853680",
-  "playerId": "player-1"
+  "gameId": "{{GameId}}",
+  "playerId": "{{PlayerId}}"
 }
 
-### Make Move
+### --- Start Turn -----------------------------------------------------------------
+
+POST {{Server_HostAddress}}/api/engine/turn-based-game/start-turn
+Content-Type: application/json
+Accept: application/json
+
+{
+  "gameId": "{{GameId}}",
+  "playerId": "{{PlayerId}}"
+}
+
+
+### --- End Turn -----------------------------------------------------------------
+
+POST {{Server_HostAddress}}/api/engine/turn-based-game/end-turn
+Content-Type: application/json
+Accept: application/json
+
+{
+  "gameId": "{{GameId}}",
+  "playerId": "{{PlayerId}}",
+  "statePayload": "{\"phase\":\"resolve\",\"turn\":2}"
+}
+
+
+### --- Make Move -----------------------------------------------------------------
 
 POST {{Server_HostAddress}}/api/engine/turn-based-game/make-move
 Content-Type: application/json
 Accept: application/json
 
 {
-  "gameId": "c8bdae2af70241efb0aa960eba853680",
-  "playerId": "player-2",
+  "gameId": "{{GameId}}",
+  "playerId": "{{PlayerId}}",
   "movePayload": "attack:slot-2"
 }

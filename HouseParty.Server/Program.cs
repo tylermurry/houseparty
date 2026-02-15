@@ -22,6 +22,7 @@ builder.Services.AddSingleton<IPrimitives, Primitives>();
 
 // Operations
 builder.Services.AddSingleton<IGameOperations, GameOperations>();
+builder.Services.AddSingleton<ICommitOperations, CommitOperations>();
 builder.Services.AddSingleton<IExclusiveOperations, ExclusiveOperations>();
 builder.Services.AddSingleton<IContestedOperations, ContestedOperations>();
 

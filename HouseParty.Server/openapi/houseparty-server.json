@@ -311,6 +311,55 @@
         }
       }
     },
+    "/api/engine/turn-based-game/end-turn": {
+      "post": {
+        "tags": [
+          "TurnBasedGame"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EndTurnRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EndTurnRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/EndTurnRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndTurnResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndTurnResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndTurnResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/engine/turn-based-game/make-move": {
       "post": {
         "tags": [
@@ -363,6 +412,48 @@
   },
   "components": {
     "schemas": {
+      "EndTurnRequest": {
+        "required": [
+          "gameId",
+          "playerId",
+          "statePayload"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "string"
+          },
+          "playerId": {
+            "type": "string"
+          },
+          "statePayload": {
+            "type": "string"
+          }
+        }
+      },
+      "EndTurnResponse": {
+        "required": [
+          "turnEnded"
+        ],
+        "type": "object",
+        "properties": {
+          "turnEnded": {
+            "type": "boolean"
+          },
+          "statePayload": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "errorMessage": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "MakeMoveRequest": {
         "required": [
           "gameId",

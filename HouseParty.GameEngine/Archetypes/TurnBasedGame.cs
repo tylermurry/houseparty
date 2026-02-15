@@ -6,6 +6,7 @@ namespace HouseParty.GameEngine.Archetypes;
 public interface ITurnBasedGame : IBaseGame
 {
     Task<List<GameEvent>> StartTurn(OperationContext context);
+    Task<(List<GameEvent> Events, string StatePayload)> EndTurn(OperationContext context, string statePayload);
     Task<List<GameEvent>> MakeMove(OperationContext context, string move);
 }
 
@@ -13,20 +14,19 @@ public class TurnBasedGame(
     IExclusiveOperations exclusiveOperations,
     IContestedOperations contestedOperations,
     IGameOperations gameOperations,
+    ICommitOperations commitOperations,
     IPolicies policies)
     : BaseGame(exclusiveOperations, gameOperations, policies), ITurnBasedGame
 {
     private readonly IPolicies _policies = policies;
     private readonly IExclusiveOperations _exclusiveOperations = exclusiveOperations;
 
-    private const string TurnTokenId = "turn";
-
     public async Task<List<GameEvent>> StartTurn(OperationContext context)
     {
         if (!await _policies.IsGameStarted(context.GameId))
             throw new Exception("Game not started");
 
-        var controlTurnResult = await _exclusiveOperations.ControlObject(context, TurnTokenId);
+        var controlTurnResult = await _exclusiveOperations.ControlObject(context, Policies.TurnTokenId);
 
         if (!controlTurnResult.Succeeded)
             throw new Exception("Turn already started");
@@ -35,7 +35,7 @@ public class TurnBasedGame(
 
         if (!activePlayerResult.Succeeded)
         {
-            var revokeResult = await _exclusiveOperations.RevokeObjectControl(context, TurnTokenId);
+            var revokeResult = await _exclusiveOperations.RevokeObjectControl(context, Policies.TurnTokenId);
 
             if (!revokeResult.Succeeded)
                 throw new Exception("Could not revoke turn token");
@@ -44,6 +44,39 @@ public class TurnBasedGame(
         }
 
         return [..controlTurnResult.Events, ..activePlayerResult.Events];
+    }
+
+    public async Task<(List<GameEvent> Events, string StatePayload)> EndTurn(OperationContext context, string statePayload)
+    {
+        if (!await _policies.IsGameStarted(context.GameId))
+            throw new Exception("Game not started");
+
+        if (!await _policies.IsTurnActive(context.GameId))
+            throw new Exception("No active turn");
+
+        if (!await _policies.IsActivePlayer(context.GameId, context.PlayerId))
+            throw new Exception("Only active player can end turn");
+
+        if (string.IsNullOrWhiteSpace(statePayload))
+            throw new Exception("State payload is required");
+
+        var releaseActivePlayerResult = await _exclusiveOperations.ReleaseObjectControl(context, Policies.ActivePlayerTokenId);
+
+        if (!releaseActivePlayerResult.Succeeded)
+            throw new Exception("Failed to release active player");
+
+        var releaseTurnResult = await _exclusiveOperations.ReleaseObjectControl(context, Policies.TurnTokenId);
+
+        if (!releaseTurnResult.Succeeded)
+            throw new Exception("Failed to release turn");
+
+        var savedState = await commitOperations.SaveData(context, statePayload);
+        var eventsCleared = await gameOperations.ClearEvents(context);
+
+        if (!eventsCleared)
+            throw new Exception("Failed to clear events");
+
+        return ([..releaseActivePlayerResult.Events, ..releaseTurnResult.Events], savedState.Data);
     }
 
     public async Task<List<GameEvent>> MakeMove(OperationContext context, string move)

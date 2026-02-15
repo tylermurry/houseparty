@@ -11,12 +11,12 @@ namespace HouseParty.Server.Controllers.Engine;
 public sealed class TurnBasedGameController(ITurnBasedGame turnBasedGame, IRoomSignalRService signalR) : ControllerBase
 {
     [HttpPost("start-game")]
-    public async Task<BaseGameExchanges.StartGameResponse> StartGame([FromBody] BaseGameExchanges.StartGameRequest request)
+    public async Task<BaseGameExchanges.StartGameResponse> StartGame([FromBody] BaseGameExchanges.StartGameRequest request, CancellationToken cancellationToken)
     {
         try
         {
             var startGameResult = await turnBasedGame.StartGame(request.PlayerId, Now());
-            await BroadcastAllEvents(startGameResult.GameId, startGameResult.Events);
+            await BroadcastAllEvents(startGameResult.GameId, startGameResult.Events, cancellationToken);
 
             return new BaseGameExchanges.StartGameResponse(true, startGameResult.GameId);
         }
@@ -27,12 +27,12 @@ public sealed class TurnBasedGameController(ITurnBasedGame turnBasedGame, IRoomS
     }
 
     [HttpPost("stop-game")]
-    public async Task<BaseGameExchanges.StopGameResponse> StopGame([FromBody] BaseGameExchanges.StopGameRequest request)
+    public async Task<BaseGameExchanges.StopGameResponse> StopGame([FromBody] BaseGameExchanges.StopGameRequest request, CancellationToken cancellationToken)
     {
         try
         {
             var gameEvents = await turnBasedGame.StopGame(new OperationContext(request.GameId, request.PlayerId, Now()));
-            await BroadcastAllEvents(request.GameId, gameEvents);
+            await BroadcastAllEvents(request.GameId, gameEvents, cancellationToken);
 
             return new BaseGameExchanges.StopGameResponse(true);
         }
@@ -43,12 +43,12 @@ public sealed class TurnBasedGameController(ITurnBasedGame turnBasedGame, IRoomS
     }
 
     [HttpPost("start-turn")]
-    public async Task<TurnBasedGameExchanges.StartTurnResponse> StartTurn([FromBody] TurnBasedGameExchanges.StartTurnRequest request)
+    public async Task<TurnBasedGameExchanges.StartTurnResponse> StartTurn([FromBody] TurnBasedGameExchanges.StartTurnRequest request, CancellationToken cancellationToken)
     {
         try
         {
             var gameEvents = await turnBasedGame.StartTurn(new OperationContext(request.GameId, request.PlayerId, Now()));
-            await BroadcastAllEvents(request.GameId, gameEvents);
+            await BroadcastAllEvents(request.GameId, gameEvents, cancellationToken);
 
             return new TurnBasedGameExchanges.StartTurnResponse(true);
         }
@@ -58,13 +58,30 @@ public sealed class TurnBasedGameController(ITurnBasedGame turnBasedGame, IRoomS
         }
     }
 
+    [HttpPost("end-turn")]
+    public async Task<TurnBasedGameExchanges.EndTurnResponse> EndTurn([FromBody] TurnBasedGameExchanges.EndTurnRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var endTurnResult = await turnBasedGame.EndTurn(new OperationContext(request.GameId, request.PlayerId, Now()), request.StatePayload);
+            await BroadcastAllEvents(request.GameId, endTurnResult.Events, cancellationToken);
+            await signalR.BroadcastGameStateSnapshot(request.GameId, endTurnResult.StatePayload, cancellationToken);
+
+            return new TurnBasedGameExchanges.EndTurnResponse(true, endTurnResult.StatePayload);
+        }
+        catch (Exception ex)
+        {
+            return new TurnBasedGameExchanges.EndTurnResponse(false, null, ex.Message);
+        }
+    }
+
     [HttpPost("make-move")]
-    public async Task<TurnBasedGameExchanges.MakeMoveResponse> MakeMove([FromBody] TurnBasedGameExchanges.MakeMoveRequest request)
+    public async Task<TurnBasedGameExchanges.MakeMoveResponse> MakeMove([FromBody] TurnBasedGameExchanges.MakeMoveRequest request, CancellationToken cancellationToken)
     {
         try
         {
             var gameEvents = await turnBasedGame.MakeMove(new OperationContext(request.GameId, request.PlayerId, Now()), request.MovePayload);
-            await BroadcastAllEvents(request.GameId, gameEvents);
+            await BroadcastAllEvents(request.GameId, gameEvents, cancellationToken);
 
             return new TurnBasedGameExchanges.MakeMoveResponse(true);
         }
@@ -74,10 +91,10 @@ public sealed class TurnBasedGameController(ITurnBasedGame turnBasedGame, IRoomS
         }
     }
 
-    private async Task BroadcastAllEvents(string roomId, List<GameEvent> events)
+    private async Task BroadcastAllEvents(string roomId, List<GameEvent> events, CancellationToken cancellationToken)
     {
         foreach (var gameEvent in events)
-            await signalR.BroadcastGameEvent(roomId, gameEvent, CancellationToken.None);
+            await signalR.BroadcastGameEvent(roomId, gameEvent, cancellationToken);
     }
 
     private static long Now() => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();

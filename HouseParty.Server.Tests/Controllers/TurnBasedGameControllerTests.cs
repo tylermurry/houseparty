@@ -1,4 +1,5 @@
 using FluentAssertions;
+using HouseParty.GameEngine;
 using HouseParty.GameEngine.Archetypes;
 using HouseParty.GameEngine.Models;
 using HouseParty.GameEngine.Models.Exchange;
@@ -12,6 +13,7 @@ public sealed class TurnBasedGameControllerTests
 {
     private const string GameId = "game-1";
     private const string PlayerId = "player-1";
+    private const string StatePayload = "{\"phase\":\"main\",\"turn\":2}";
 
     [Fact]
     public async Task StartGame_ReturnsSuccess_AndBroadcastsAllEvents()
@@ -30,7 +32,7 @@ public sealed class TurnBasedGameControllerTests
         var signalR = new FakeRoomSignalRService();
         var controller = new TurnBasedGameController(turnBasedGame.Object, signalR);
 
-        var result = await controller.StartGame(new BaseGameExchanges.StartGameRequest(PlayerId));
+        var result = await controller.StartGame(new BaseGameExchanges.StartGameRequest(PlayerId), CancellationToken.None);
 
         result.GameStarted.Should().BeTrue();
         result.GameId.Should().Be(GameId);
@@ -57,7 +59,7 @@ public sealed class TurnBasedGameControllerTests
         var signalR = new FakeRoomSignalRService();
         var controller = new TurnBasedGameController(turnBasedGame.Object, signalR);
 
-        var result = await controller.StartGame(new BaseGameExchanges.StartGameRequest(PlayerId));
+        var result = await controller.StartGame(new BaseGameExchanges.StartGameRequest(PlayerId), CancellationToken.None);
 
         result.GameStarted.Should().BeFalse();
         result.GameId.Should().BeNull();
@@ -79,7 +81,7 @@ public sealed class TurnBasedGameControllerTests
         var signalR = new FakeRoomSignalRService();
         var controller = new TurnBasedGameController(turnBasedGame.Object, signalR);
 
-        var result = await controller.StopGame(new BaseGameExchanges.StopGameRequest(GameId, PlayerId));
+        var result = await controller.StopGame(new BaseGameExchanges.StopGameRequest(GameId, PlayerId), CancellationToken.None);
 
         result.GameStopped.Should().BeTrue();
         result.ErrorMessage.Should().BeNull();
@@ -98,7 +100,7 @@ public sealed class TurnBasedGameControllerTests
         var signalR = new FakeRoomSignalRService();
         var controller = new TurnBasedGameController(turnBasedGame.Object, signalR);
 
-        var result = await controller.StopGame(new BaseGameExchanges.StopGameRequest(GameId, PlayerId));
+        var result = await controller.StopGame(new BaseGameExchanges.StopGameRequest(GameId, PlayerId), CancellationToken.None);
 
         result.GameStopped.Should().BeFalse();
         result.ErrorMessage.Should().Be("Could not stop game");
@@ -117,11 +119,65 @@ public sealed class TurnBasedGameControllerTests
         var signalR = new FakeRoomSignalRService();
         var controller = new TurnBasedGameController(turnBasedGame.Object, signalR);
 
-        var result = await controller.StartTurn(new TurnBasedGameExchanges.StartTurnRequest(GameId, PlayerId));
+        var result = await controller.StartTurn(new TurnBasedGameExchanges.StartTurnRequest(GameId, PlayerId), CancellationToken.None);
 
         result.TurnStarted.Should().BeFalse();
         result.ErrorMessage.Should().Be("Game not started");
         signalR.BroadcastCalls.Should().BeEmpty();
+        turnBasedGame.VerifyAll();
+    }
+
+    [Fact]
+    public async Task EndTurn_ReturnsSuccess_AndBroadcastsAllEvents()
+    {
+        var gameEvents = new List<GameEvent>
+        {
+            new ReleaseObjectEvent(Policies.ActivePlayerTokenId) { Sequence = 3, PlayerId = PlayerId, Timestamp = 102 },
+            new ReleaseObjectEvent(Policies.TurnTokenId) { Sequence = 4, PlayerId = PlayerId, Timestamp = 103 }
+        };
+
+        var turnBasedGame = new Mock<ITurnBasedGame>(MockBehavior.Strict);
+        turnBasedGame
+            .Setup(x => x.EndTurn(It.Is<OperationContext>(context => context.GameId == GameId && context.PlayerId == PlayerId), StatePayload))
+            .ReturnsAsync((gameEvents, StatePayload));
+
+        var signalR = new FakeRoomSignalRService();
+        var controller = new TurnBasedGameController(turnBasedGame.Object, signalR);
+
+        var result = await controller.EndTurn(new TurnBasedGameExchanges.EndTurnRequest(GameId, PlayerId, StatePayload), CancellationToken.None);
+
+        result.TurnEnded.Should().BeTrue();
+        result.StatePayload.Should().Be(StatePayload);
+        result.ErrorMessage.Should().BeNull();
+        signalR.BroadcastCalls.Should().HaveCount(2);
+        signalR.StateSnapshotBroadcastCalls.Should().HaveCount(1);
+        signalR.BroadcastCalls[0].RoomId.Should().Be(GameId);
+        signalR.BroadcastCalls[0].Payload.Should().Be(gameEvents[0]);
+        signalR.BroadcastCalls[1].RoomId.Should().Be(GameId);
+        signalR.BroadcastCalls[1].Payload.Should().Be(gameEvents[1]);
+        signalR.StateSnapshotBroadcastCalls[0].RoomId.Should().Be(GameId);
+        signalR.StateSnapshotBroadcastCalls[0].Payload.Should().Be(StatePayload);
+        turnBasedGame.VerifyAll();
+    }
+
+    [Fact]
+    public async Task EndTurn_ReturnsFailure_WhenEndTurnThrows()
+    {
+        var turnBasedGame = new Mock<ITurnBasedGame>(MockBehavior.Strict);
+        turnBasedGame
+            .Setup(x => x.EndTurn(It.Is<OperationContext>(context => context.GameId == GameId && context.PlayerId == PlayerId), StatePayload))
+            .ThrowsAsync(new Exception("No active turn"));
+
+        var signalR = new FakeRoomSignalRService();
+        var controller = new TurnBasedGameController(turnBasedGame.Object, signalR);
+
+        var result = await controller.EndTurn(new TurnBasedGameExchanges.EndTurnRequest(GameId, PlayerId, StatePayload), CancellationToken.None);
+
+        result.TurnEnded.Should().BeFalse();
+        result.StatePayload.Should().BeNull();
+        result.ErrorMessage.Should().Be("No active turn");
+        signalR.BroadcastCalls.Should().BeEmpty();
+        signalR.StateSnapshotBroadcastCalls.Should().BeEmpty();
         turnBasedGame.VerifyAll();
     }
 
@@ -142,7 +198,7 @@ public sealed class TurnBasedGameControllerTests
         var signalR = new FakeRoomSignalRService();
         var controller = new TurnBasedGameController(turnBasedGame.Object, signalR);
 
-        var result = await controller.MakeMove(new TurnBasedGameExchanges.MakeMoveRequest(GameId, PlayerId, move));
+        var result = await controller.MakeMove(new TurnBasedGameExchanges.MakeMoveRequest(GameId, PlayerId, move), CancellationToken.None);
 
         result.MoveAccepted.Should().BeTrue();
         result.ErrorMessage.Should().BeNull();
@@ -165,7 +221,7 @@ public sealed class TurnBasedGameControllerTests
         var signalR = new FakeRoomSignalRService();
         var controller = new TurnBasedGameController(turnBasedGame.Object, signalR);
 
-        var result = await controller.MakeMove(new TurnBasedGameExchanges.MakeMoveRequest(GameId, PlayerId, move));
+        var result = await controller.MakeMove(new TurnBasedGameExchanges.MakeMoveRequest(GameId, PlayerId, move), CancellationToken.None);
 
         result.MoveAccepted.Should().BeFalse();
         result.ErrorMessage.Should().Be("Only active player can make a move");

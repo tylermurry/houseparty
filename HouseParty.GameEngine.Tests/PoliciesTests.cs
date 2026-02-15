@@ -92,4 +92,32 @@ public sealed class PoliciesTests
         result.Should().BeTrue();
         primitives.VerifyAll();
     }
+
+    [Fact]
+    public async Task IsTurnActive_ReturnsFalse_WhenTurnHasNoHolder()
+    {
+        var primitives = new Mock<IPrimitives>(MockBehavior.Strict);
+        primitives.Setup(x => x.GetTokenHolderAsync(GameId, Policies.TurnTokenId)).ReturnsAsync((string?)null);
+
+        var policies = new Policies(primitives.Object);
+
+        var result = await policies.IsTurnActive(GameId);
+
+        result.Should().BeFalse();
+        primitives.VerifyAll();
+    }
+
+    [Fact]
+    public async Task IsTurnActive_ReturnsTrue_WhenTurnHasHolder()
+    {
+        var primitives = new Mock<IPrimitives>(MockBehavior.Strict);
+        primitives.Setup(x => x.GetTokenHolderAsync(GameId, Policies.TurnTokenId)).ReturnsAsync(PlayerId);
+
+        var policies = new Policies(primitives.Object);
+
+        var result = await policies.IsTurnActive(GameId);
+
+        result.Should().BeTrue();
+        primitives.VerifyAll();
+    }
 }

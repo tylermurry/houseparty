@@ -10,7 +10,7 @@ public sealed class TurnBasedGameTests
 {
     private const string GameId = "game-1";
     private const string PlayerId = "player-1";
-    private const string TurnTokenId = "turn";
+    private const string StatePayload = "{\"phase\":\"main\",\"turn\":2}";
     private const string MovePayload = "attack:slot-2";
     private const long Now = 123456789L;
 
@@ -22,11 +22,12 @@ public sealed class TurnBasedGameTests
         var exclusiveOperations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
         var contestedOperations = new Mock<IContestedOperations>(MockBehavior.Strict);
         var gameOperations = new Mock<IGameOperations>(MockBehavior.Strict);
+        var commitOperations = new Mock<ICommitOperations>(MockBehavior.Strict);
         var policies = new Mock<IPolicies>(MockBehavior.Strict);
 
         policies.Setup(x => x.IsGameStarted(GameId)).ReturnsAsync(false);
 
-        var turnBasedGame = new TurnBasedGame(exclusiveOperations.Object, contestedOperations.Object, gameOperations.Object, policies.Object);
+        var turnBasedGame = new TurnBasedGame(exclusiveOperations.Object, contestedOperations.Object, gameOperations.Object, commitOperations.Object, policies.Object);
 
         var act = () => turnBasedGame.StartTurn(_context);
 
@@ -34,6 +35,7 @@ public sealed class TurnBasedGameTests
         exclusiveOperations.VerifyAll();
         contestedOperations.VerifyAll();
         gameOperations.VerifyAll();
+        commitOperations.VerifyAll();
         policies.VerifyAll();
     }
 
@@ -43,14 +45,15 @@ public sealed class TurnBasedGameTests
         var exclusiveOperations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
         var contestedOperations = new Mock<IContestedOperations>(MockBehavior.Strict);
         var gameOperations = new Mock<IGameOperations>(MockBehavior.Strict);
+        var commitOperations = new Mock<ICommitOperations>(MockBehavior.Strict);
         var policies = new Mock<IPolicies>(MockBehavior.Strict);
 
         policies.Setup(x => x.IsGameStarted(GameId)).ReturnsAsync(true);
         exclusiveOperations
-            .Setup(x => x.ControlObject(_context, TurnTokenId))
+            .Setup(x => x.ControlObject(_context, Policies.TurnTokenId))
             .ReturnsAsync(new OperationResult(false, []));
 
-        var turnBasedGame = new TurnBasedGame(exclusiveOperations.Object, contestedOperations.Object, gameOperations.Object, policies.Object);
+        var turnBasedGame = new TurnBasedGame(exclusiveOperations.Object, contestedOperations.Object, gameOperations.Object, commitOperations.Object, policies.Object);
 
         var act = () => turnBasedGame.StartTurn(_context);
 
@@ -58,6 +61,7 @@ public sealed class TurnBasedGameTests
         exclusiveOperations.VerifyAll();
         contestedOperations.VerifyAll();
         gameOperations.VerifyAll();
+        commitOperations.VerifyAll();
         policies.VerifyAll();
     }
 
@@ -66,26 +70,27 @@ public sealed class TurnBasedGameTests
     {
         var controlTurnEvents = new List<GameEvent>
         {
-            new ControlObjectEvent(TurnTokenId) { Sequence = 1, PlayerId = PlayerId, Timestamp = Now }
+            new ControlObjectEvent(Policies.TurnTokenId) { Sequence = 1, PlayerId = PlayerId, Timestamp = Now }
         };
 
         var exclusiveOperations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
         var contestedOperations = new Mock<IContestedOperations>(MockBehavior.Strict);
         var gameOperations = new Mock<IGameOperations>(MockBehavior.Strict);
+        var commitOperations = new Mock<ICommitOperations>(MockBehavior.Strict);
         var policies = new Mock<IPolicies>(MockBehavior.Strict);
 
         policies.Setup(x => x.IsGameStarted(GameId)).ReturnsAsync(true);
         exclusiveOperations
-            .Setup(x => x.ControlObject(_context, TurnTokenId))
+            .Setup(x => x.ControlObject(_context, Policies.TurnTokenId))
             .ReturnsAsync(new OperationResult(true, controlTurnEvents));
         exclusiveOperations
             .Setup(x => x.ControlObject(_context, Policies.ActivePlayerTokenId))
             .ReturnsAsync(new OperationResult(false, []));
         exclusiveOperations
-            .Setup(x => x.RevokeObjectControl(_context, TurnTokenId))
+            .Setup(x => x.RevokeObjectControl(_context, Policies.TurnTokenId))
             .ReturnsAsync(new OperationResult(false, []));
 
-        var turnBasedGame = new TurnBasedGame(exclusiveOperations.Object, contestedOperations.Object, gameOperations.Object, policies.Object);
+        var turnBasedGame = new TurnBasedGame(exclusiveOperations.Object, contestedOperations.Object, gameOperations.Object, commitOperations.Object, policies.Object);
 
         var act = () => turnBasedGame.StartTurn(_context);
 
@@ -93,6 +98,7 @@ public sealed class TurnBasedGameTests
         exclusiveOperations.VerifyAll();
         contestedOperations.VerifyAll();
         gameOperations.VerifyAll();
+        commitOperations.VerifyAll();
         policies.VerifyAll();
     }
 
@@ -101,30 +107,31 @@ public sealed class TurnBasedGameTests
     {
         var controlTurnEvents = new List<GameEvent>
         {
-            new ControlObjectEvent(TurnTokenId) { Sequence = 1, PlayerId = PlayerId, Timestamp = Now }
+            new ControlObjectEvent(Policies.TurnTokenId) { Sequence = 1, PlayerId = PlayerId, Timestamp = Now }
         };
         var revokeTurnEvents = new List<GameEvent>
         {
-            new RevokeObjectEvent(TurnTokenId) { Sequence = 2, PlayerId = PlayerId, Timestamp = Now }
+            new RevokeObjectEvent(Policies.TurnTokenId) { Sequence = 2, PlayerId = PlayerId, Timestamp = Now }
         };
 
         var exclusiveOperations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
         var contestedOperations = new Mock<IContestedOperations>(MockBehavior.Strict);
         var gameOperations = new Mock<IGameOperations>(MockBehavior.Strict);
+        var commitOperations = new Mock<ICommitOperations>(MockBehavior.Strict);
         var policies = new Mock<IPolicies>(MockBehavior.Strict);
 
         policies.Setup(x => x.IsGameStarted(GameId)).ReturnsAsync(true);
         exclusiveOperations
-            .Setup(x => x.ControlObject(_context, TurnTokenId))
+            .Setup(x => x.ControlObject(_context, Policies.TurnTokenId))
             .ReturnsAsync(new OperationResult(true, controlTurnEvents));
         exclusiveOperations
             .Setup(x => x.ControlObject(_context, Policies.ActivePlayerTokenId))
             .ReturnsAsync(new OperationResult(false, []));
         exclusiveOperations
-            .Setup(x => x.RevokeObjectControl(_context, TurnTokenId))
+            .Setup(x => x.RevokeObjectControl(_context, Policies.TurnTokenId))
             .ReturnsAsync(new OperationResult(true, revokeTurnEvents));
 
-        var turnBasedGame = new TurnBasedGame(exclusiveOperations.Object, contestedOperations.Object, gameOperations.Object, policies.Object);
+        var turnBasedGame = new TurnBasedGame(exclusiveOperations.Object, contestedOperations.Object, gameOperations.Object, commitOperations.Object, policies.Object);
 
         var act = () => turnBasedGame.StartTurn(_context);
 
@@ -132,6 +139,7 @@ public sealed class TurnBasedGameTests
         exclusiveOperations.VerifyAll();
         contestedOperations.VerifyAll();
         gameOperations.VerifyAll();
+        commitOperations.VerifyAll();
         policies.VerifyAll();
     }
 
@@ -140,7 +148,7 @@ public sealed class TurnBasedGameTests
     {
         var controlTurnEvents = new List<GameEvent>
         {
-            new ControlObjectEvent(TurnTokenId) { Sequence = 1, PlayerId = PlayerId, Timestamp = Now }
+            new ControlObjectEvent(Policies.TurnTokenId) { Sequence = 1, PlayerId = PlayerId, Timestamp = Now }
         };
         var setActivePlayerEvents = new List<GameEvent>
         {
@@ -150,17 +158,18 @@ public sealed class TurnBasedGameTests
         var exclusiveOperations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
         var contestedOperations = new Mock<IContestedOperations>(MockBehavior.Strict);
         var gameOperations = new Mock<IGameOperations>(MockBehavior.Strict);
+        var commitOperations = new Mock<ICommitOperations>(MockBehavior.Strict);
         var policies = new Mock<IPolicies>(MockBehavior.Strict);
 
         policies.Setup(x => x.IsGameStarted(GameId)).ReturnsAsync(true);
         exclusiveOperations
-            .Setup(x => x.ControlObject(_context, TurnTokenId))
+            .Setup(x => x.ControlObject(_context, Policies.TurnTokenId))
             .ReturnsAsync(new OperationResult(true, controlTurnEvents));
         exclusiveOperations
             .Setup(x => x.ControlObject(_context, Policies.ActivePlayerTokenId))
             .ReturnsAsync(new OperationResult(true, setActivePlayerEvents));
 
-        var turnBasedGame = new TurnBasedGame(exclusiveOperations.Object, contestedOperations.Object, gameOperations.Object, policies.Object);
+        var turnBasedGame = new TurnBasedGame(exclusiveOperations.Object, contestedOperations.Object, gameOperations.Object, commitOperations.Object, policies.Object);
 
         var events = await turnBasedGame.StartTurn(_context);
 
@@ -168,6 +177,236 @@ public sealed class TurnBasedGameTests
         exclusiveOperations.VerifyAll();
         contestedOperations.VerifyAll();
         gameOperations.VerifyAll();
+        commitOperations.VerifyAll();
+        policies.VerifyAll();
+    }
+
+    [Fact]
+    public async Task EndTurn_Throws_WhenGameNotStarted()
+    {
+        var exclusiveOperations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
+        var contestedOperations = new Mock<IContestedOperations>(MockBehavior.Strict);
+        var gameOperations = new Mock<IGameOperations>(MockBehavior.Strict);
+        var commitOperations = new Mock<ICommitOperations>(MockBehavior.Strict);
+        var policies = new Mock<IPolicies>(MockBehavior.Strict);
+
+        policies.Setup(x => x.IsGameStarted(GameId)).ReturnsAsync(false);
+
+        var turnBasedGame = new TurnBasedGame(exclusiveOperations.Object, contestedOperations.Object, gameOperations.Object, commitOperations.Object, policies.Object);
+
+        var act = () => turnBasedGame.EndTurn(_context, StatePayload);
+
+        await act.Should().ThrowAsync<Exception>().WithMessage("Game not started");
+        exclusiveOperations.VerifyAll();
+        contestedOperations.VerifyAll();
+        gameOperations.VerifyAll();
+        commitOperations.VerifyAll();
+        policies.VerifyAll();
+    }
+
+    [Fact]
+    public async Task EndTurn_Throws_WhenTurnIsNotActive()
+    {
+        var exclusiveOperations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
+        var contestedOperations = new Mock<IContestedOperations>(MockBehavior.Strict);
+        var gameOperations = new Mock<IGameOperations>(MockBehavior.Strict);
+        var commitOperations = new Mock<ICommitOperations>(MockBehavior.Strict);
+        var policies = new Mock<IPolicies>(MockBehavior.Strict);
+
+        policies.Setup(x => x.IsGameStarted(GameId)).ReturnsAsync(true);
+        policies.Setup(x => x.IsTurnActive(GameId)).ReturnsAsync(false);
+
+        var turnBasedGame = new TurnBasedGame(exclusiveOperations.Object, contestedOperations.Object, gameOperations.Object, commitOperations.Object, policies.Object);
+
+        var act = () => turnBasedGame.EndTurn(_context, StatePayload);
+
+        await act.Should().ThrowAsync<Exception>().WithMessage("No active turn");
+        exclusiveOperations.VerifyAll();
+        contestedOperations.VerifyAll();
+        gameOperations.VerifyAll();
+        commitOperations.VerifyAll();
+        policies.VerifyAll();
+    }
+
+    [Fact]
+    public async Task EndTurn_Throws_WhenPlayerIsNotActive()
+    {
+        var exclusiveOperations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
+        var contestedOperations = new Mock<IContestedOperations>(MockBehavior.Strict);
+        var gameOperations = new Mock<IGameOperations>(MockBehavior.Strict);
+        var commitOperations = new Mock<ICommitOperations>(MockBehavior.Strict);
+        var policies = new Mock<IPolicies>(MockBehavior.Strict);
+
+        policies.Setup(x => x.IsGameStarted(GameId)).ReturnsAsync(true);
+        policies.Setup(x => x.IsTurnActive(GameId)).ReturnsAsync(true);
+        policies.Setup(x => x.IsActivePlayer(GameId, PlayerId)).ReturnsAsync(false);
+
+        var turnBasedGame = new TurnBasedGame(exclusiveOperations.Object, contestedOperations.Object, gameOperations.Object, commitOperations.Object, policies.Object);
+
+        var act = () => turnBasedGame.EndTurn(_context, StatePayload);
+
+        await act.Should().ThrowAsync<Exception>().WithMessage("Only active player can end turn");
+        exclusiveOperations.VerifyAll();
+        contestedOperations.VerifyAll();
+        gameOperations.VerifyAll();
+        commitOperations.VerifyAll();
+        policies.VerifyAll();
+    }
+
+    [Fact]
+    public async Task EndTurn_Throws_WhenReleasingActivePlayerFails()
+    {
+        var exclusiveOperations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
+        var contestedOperations = new Mock<IContestedOperations>(MockBehavior.Strict);
+        var gameOperations = new Mock<IGameOperations>(MockBehavior.Strict);
+        var commitOperations = new Mock<ICommitOperations>(MockBehavior.Strict);
+        var policies = new Mock<IPolicies>(MockBehavior.Strict);
+
+        policies.Setup(x => x.IsGameStarted(GameId)).ReturnsAsync(true);
+        policies.Setup(x => x.IsTurnActive(GameId)).ReturnsAsync(true);
+        policies.Setup(x => x.IsActivePlayer(GameId, PlayerId)).ReturnsAsync(true);
+        exclusiveOperations
+            .Setup(x => x.ReleaseObjectControl(_context, Policies.ActivePlayerTokenId))
+            .ReturnsAsync(new OperationResult(false, []));
+
+        var turnBasedGame = new TurnBasedGame(exclusiveOperations.Object, contestedOperations.Object, gameOperations.Object, commitOperations.Object, policies.Object);
+
+        var act = () => turnBasedGame.EndTurn(_context, StatePayload);
+
+        await act.Should().ThrowAsync<Exception>().WithMessage("Failed to release active player");
+        exclusiveOperations.VerifyAll();
+        contestedOperations.VerifyAll();
+        gameOperations.VerifyAll();
+        commitOperations.VerifyAll();
+        policies.VerifyAll();
+    }
+
+    [Fact]
+    public async Task EndTurn_Throws_WhenReleasingTurnFails()
+    {
+        var releaseActivePlayerEvents = new List<GameEvent>
+        {
+            new ReleaseObjectEvent(Policies.ActivePlayerTokenId) { Sequence = 3, PlayerId = PlayerId, Timestamp = Now }
+        };
+
+        var exclusiveOperations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
+        var contestedOperations = new Mock<IContestedOperations>(MockBehavior.Strict);
+        var gameOperations = new Mock<IGameOperations>(MockBehavior.Strict);
+        var commitOperations = new Mock<ICommitOperations>(MockBehavior.Strict);
+        var policies = new Mock<IPolicies>(MockBehavior.Strict);
+
+        policies.Setup(x => x.IsGameStarted(GameId)).ReturnsAsync(true);
+        policies.Setup(x => x.IsTurnActive(GameId)).ReturnsAsync(true);
+        policies.Setup(x => x.IsActivePlayer(GameId, PlayerId)).ReturnsAsync(true);
+        exclusiveOperations
+            .Setup(x => x.ReleaseObjectControl(_context, Policies.ActivePlayerTokenId))
+            .ReturnsAsync(new OperationResult(true, releaseActivePlayerEvents));
+        exclusiveOperations
+            .Setup(x => x.ReleaseObjectControl(_context, Policies.TurnTokenId))
+            .ReturnsAsync(new OperationResult(false, []));
+
+        var turnBasedGame = new TurnBasedGame(exclusiveOperations.Object, contestedOperations.Object, gameOperations.Object, commitOperations.Object, policies.Object);
+
+        var act = () => turnBasedGame.EndTurn(_context, StatePayload);
+
+        await act.Should().ThrowAsync<Exception>().WithMessage("Failed to release turn");
+        exclusiveOperations.VerifyAll();
+        contestedOperations.VerifyAll();
+        gameOperations.VerifyAll();
+        commitOperations.VerifyAll();
+        policies.VerifyAll();
+    }
+
+    [Fact]
+    public async Task EndTurn_Succeeds_WhenActivePlayerEndsActiveTurn()
+    {
+        var releaseActivePlayerEvents = new List<GameEvent>
+        {
+            new ReleaseObjectEvent(Policies.ActivePlayerTokenId) { Sequence = 3, PlayerId = PlayerId, Timestamp = Now }
+        };
+        var releaseTurnEvents = new List<GameEvent>
+        {
+            new ReleaseObjectEvent(Policies.TurnTokenId) { Sequence = 4, PlayerId = PlayerId, Timestamp = Now }
+        };
+
+        var exclusiveOperations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
+        var contestedOperations = new Mock<IContestedOperations>(MockBehavior.Strict);
+        var gameOperations = new Mock<IGameOperations>(MockBehavior.Strict);
+        var commitOperations = new Mock<ICommitOperations>(MockBehavior.Strict);
+        var policies = new Mock<IPolicies>(MockBehavior.Strict);
+
+        policies.Setup(x => x.IsGameStarted(GameId)).ReturnsAsync(true);
+        policies.Setup(x => x.IsTurnActive(GameId)).ReturnsAsync(true);
+        policies.Setup(x => x.IsActivePlayer(GameId, PlayerId)).ReturnsAsync(true);
+        exclusiveOperations
+            .Setup(x => x.ReleaseObjectControl(_context, Policies.ActivePlayerTokenId))
+            .ReturnsAsync(new OperationResult(true, releaseActivePlayerEvents));
+        exclusiveOperations
+            .Setup(x => x.ReleaseObjectControl(_context, Policies.TurnTokenId))
+            .ReturnsAsync(new OperationResult(true, releaseTurnEvents));
+        commitOperations
+            .Setup(x => x.SaveData(_context, StatePayload))
+            .ReturnsAsync(new GameData(1, StatePayload));
+        gameOperations
+            .Setup(x => x.ClearEvents(_context))
+            .ReturnsAsync(true);
+
+        var turnBasedGame = new TurnBasedGame(exclusiveOperations.Object, contestedOperations.Object, gameOperations.Object, commitOperations.Object, policies.Object);
+
+        var result = await turnBasedGame.EndTurn(_context, StatePayload);
+
+        result.Events.Should().Equal(releaseActivePlayerEvents.Concat(releaseTurnEvents));
+        result.StatePayload.Should().Be(StatePayload);
+        exclusiveOperations.VerifyAll();
+        contestedOperations.VerifyAll();
+        gameOperations.VerifyAll();
+        commitOperations.VerifyAll();
+        policies.VerifyAll();
+    }
+
+    [Fact]
+    public async Task EndTurn_Throws_WhenClearEventsFails_AfterSavingState()
+    {
+        var releaseActivePlayerEvents = new List<GameEvent>
+        {
+            new ReleaseObjectEvent(Policies.ActivePlayerTokenId) { Sequence = 3, PlayerId = PlayerId, Timestamp = Now }
+        };
+        var releaseTurnEvents = new List<GameEvent>
+        {
+            new ReleaseObjectEvent(Policies.TurnTokenId) { Sequence = 4, PlayerId = PlayerId, Timestamp = Now }
+        };
+
+        var exclusiveOperations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
+        var contestedOperations = new Mock<IContestedOperations>(MockBehavior.Strict);
+        var gameOperations = new Mock<IGameOperations>(MockBehavior.Strict);
+        var commitOperations = new Mock<ICommitOperations>(MockBehavior.Strict);
+        var policies = new Mock<IPolicies>(MockBehavior.Strict);
+
+        policies.Setup(x => x.IsGameStarted(GameId)).ReturnsAsync(true);
+        policies.Setup(x => x.IsTurnActive(GameId)).ReturnsAsync(true);
+        policies.Setup(x => x.IsActivePlayer(GameId, PlayerId)).ReturnsAsync(true);
+        exclusiveOperations
+            .Setup(x => x.ReleaseObjectControl(_context, Policies.ActivePlayerTokenId))
+            .ReturnsAsync(new OperationResult(true, releaseActivePlayerEvents));
+        exclusiveOperations
+            .Setup(x => x.ReleaseObjectControl(_context, Policies.TurnTokenId))
+            .ReturnsAsync(new OperationResult(true, releaseTurnEvents));
+        commitOperations
+            .Setup(x => x.SaveData(_context, StatePayload))
+            .ReturnsAsync(new GameData(1, StatePayload));
+        gameOperations
+            .Setup(x => x.ClearEvents(_context))
+            .ReturnsAsync(false);
+
+        var turnBasedGame = new TurnBasedGame(exclusiveOperations.Object, contestedOperations.Object, gameOperations.Object, commitOperations.Object, policies.Object);
+
+        var act = () => turnBasedGame.EndTurn(_context, StatePayload);
+
+        await act.Should().ThrowAsync<Exception>().WithMessage("Failed to clear events");
+        exclusiveOperations.VerifyAll();
+        contestedOperations.VerifyAll();
+        gameOperations.VerifyAll();
+        commitOperations.VerifyAll();
         policies.VerifyAll();
     }
 
@@ -177,11 +416,12 @@ public sealed class TurnBasedGameTests
         var exclusiveOperations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
         var contestedOperations = new Mock<IContestedOperations>(MockBehavior.Strict);
         var gameOperations = new Mock<IGameOperations>(MockBehavior.Strict);
+        var commitOperations = new Mock<ICommitOperations>(MockBehavior.Strict);
         var policies = new Mock<IPolicies>(MockBehavior.Strict);
 
         policies.Setup(x => x.IsGameStarted(GameId)).ReturnsAsync(false);
 
-        var turnBasedGame = new TurnBasedGame(exclusiveOperations.Object, contestedOperations.Object, gameOperations.Object, policies.Object);
+        var turnBasedGame = new TurnBasedGame(exclusiveOperations.Object, contestedOperations.Object, gameOperations.Object, commitOperations.Object, policies.Object);
 
         var act = () => turnBasedGame.MakeMove(_context, MovePayload);
 
@@ -189,6 +429,7 @@ public sealed class TurnBasedGameTests
         exclusiveOperations.VerifyAll();
         contestedOperations.VerifyAll();
         gameOperations.VerifyAll();
+        commitOperations.VerifyAll();
         policies.VerifyAll();
     }
 
@@ -198,12 +439,13 @@ public sealed class TurnBasedGameTests
         var exclusiveOperations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
         var contestedOperations = new Mock<IContestedOperations>(MockBehavior.Strict);
         var gameOperations = new Mock<IGameOperations>(MockBehavior.Strict);
+        var commitOperations = new Mock<ICommitOperations>(MockBehavior.Strict);
         var policies = new Mock<IPolicies>(MockBehavior.Strict);
 
         policies.Setup(x => x.IsGameStarted(GameId)).ReturnsAsync(true);
         policies.Setup(x => x.IsActivePlayer(GameId, PlayerId)).ReturnsAsync(false);
 
-        var turnBasedGame = new TurnBasedGame(exclusiveOperations.Object, contestedOperations.Object, gameOperations.Object, policies.Object);
+        var turnBasedGame = new TurnBasedGame(exclusiveOperations.Object, contestedOperations.Object, gameOperations.Object, commitOperations.Object, policies.Object);
 
         var act = () => turnBasedGame.MakeMove(_context, MovePayload);
 
@@ -211,6 +453,7 @@ public sealed class TurnBasedGameTests
         exclusiveOperations.VerifyAll();
         contestedOperations.VerifyAll();
         gameOperations.VerifyAll();
+        commitOperations.VerifyAll();
         policies.VerifyAll();
     }
 
@@ -220,12 +463,13 @@ public sealed class TurnBasedGameTests
         var exclusiveOperations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
         var contestedOperations = new Mock<IContestedOperations>(MockBehavior.Strict);
         var gameOperations = new Mock<IGameOperations>(MockBehavior.Strict);
+        var commitOperations = new Mock<ICommitOperations>(MockBehavior.Strict);
         var policies = new Mock<IPolicies>(MockBehavior.Strict);
 
         policies.Setup(x => x.IsGameStarted(GameId)).ReturnsAsync(true);
         policies.Setup(x => x.IsActivePlayer(GameId, PlayerId)).ReturnsAsync(true);
 
-        var turnBasedGame = new TurnBasedGame(exclusiveOperations.Object, contestedOperations.Object, gameOperations.Object, policies.Object);
+        var turnBasedGame = new TurnBasedGame(exclusiveOperations.Object, contestedOperations.Object, gameOperations.Object, commitOperations.Object, policies.Object);
 
         var act = () => turnBasedGame.MakeMove(_context, " ");
 
@@ -233,6 +477,7 @@ public sealed class TurnBasedGameTests
         exclusiveOperations.VerifyAll();
         contestedOperations.VerifyAll();
         gameOperations.VerifyAll();
+        commitOperations.VerifyAll();
         policies.VerifyAll();
     }
 
@@ -247,6 +492,7 @@ public sealed class TurnBasedGameTests
         var exclusiveOperations = new Mock<IExclusiveOperations>(MockBehavior.Strict);
         var contestedOperations = new Mock<IContestedOperations>(MockBehavior.Strict);
         var gameOperations = new Mock<IGameOperations>(MockBehavior.Strict);
+        var commitOperations = new Mock<ICommitOperations>(MockBehavior.Strict);
         var policies = new Mock<IPolicies>(MockBehavior.Strict);
 
         policies.Setup(x => x.IsGameStarted(GameId)).ReturnsAsync(true);
@@ -255,7 +501,7 @@ public sealed class TurnBasedGameTests
             .Setup(x => x.SubmitAction(_context, MovePayload))
             .ReturnsAsync(new OperationResult(true, moveEvents));
 
-        var turnBasedGame = new TurnBasedGame(exclusiveOperations.Object, contestedOperations.Object, gameOperations.Object, policies.Object);
+        var turnBasedGame = new TurnBasedGame(exclusiveOperations.Object, contestedOperations.Object, gameOperations.Object, commitOperations.Object, policies.Object);
 
         var events = await turnBasedGame.MakeMove(_context, MovePayload);
 
@@ -263,6 +509,7 @@ public sealed class TurnBasedGameTests
         exclusiveOperations.VerifyAll();
         contestedOperations.VerifyAll();
         gameOperations.VerifyAll();
+        commitOperations.VerifyAll();
         policies.VerifyAll();
     }
 }
