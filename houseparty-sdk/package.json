@@ -1,0 +1,35 @@
+{
+  "name": "@houseparty/sdk",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "gen:api": "openapi-ts -i ../HouseParty.Server/openapi/houseparty-server.json -o src/generated/client",
+    "gen:events": "node scripts/gen-events.mjs",
+    "gen:all": "npm run gen:api && npm run gen:events",
+    "prebuild": "npm run gen:all",
+    "build": "tsup",
+    "pretype-check": "npm run gen:all",
+    "type-check": "tsc --noEmit",
+    "pretest": "npm run gen:all",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@microsoft/signalr": "^8.0.7"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "0.90.10",
+    "tsup": "^8.5.0",
+    "typescript": "~5.9.3",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
+}
