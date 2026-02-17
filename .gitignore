@@ -12,3 +12,5 @@
 /HouseParty.GameEngine/obj/**
 /HouseParty.GameEngine.Tests/bin/**
 /HouseParty.GameEngine.Tests/obj/**
+/HouseParty.E2E/bin/**
+/HouseParty.E2E/obj/**
