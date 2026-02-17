@@ -14,3 +14,11 @@
 /HouseParty.GameEngine.Tests/obj/**
 /HouseParty.E2E/bin/**
 /HouseParty.E2E/obj/**
+/houseparty-docs/build/**
+/houseparty-docs/node_modules/**
+/houseparty-docs/obj/**
+/houseparty-docs/.docusaurus
+/houseparty-sdk/dist/**
+/houseparty-sdk/node_modules/**
+/houseparty-sdk/obj/**
+HouseParty.sln.DotSettings.user
