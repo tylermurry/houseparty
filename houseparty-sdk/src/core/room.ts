@@ -12,6 +12,7 @@ import { HttpTransport } from '../transport/http'
 import { RealtimeTransport } from '../transport/signalr'
 import { Emitter } from './emitter'
 import { GameHandleImpl } from './game'
+import { PlayerHandleImpl } from './player'
 import { parseGameEvent } from './gameEvents'
 import type { Trace } from '../trace'
 
@@ -87,11 +88,13 @@ export class RoomHandleImpl<TState> implements RoomHandle<TState> {
 
     this.trace.log('room', 'Joined room group.', { roomId: this.id, player: joinResult.player })
 
-    return {
+    return new PlayerHandleImpl({
       id: toPlayerId(joinResult.player.number),
       number: joinResult.player.number,
       name: joinResult.player.name,
-    }
+      http: this.http,
+      trace: this.trace,
+    })
   }
 
   async createTurnBasedGame(adminPlayer: PlayerHandle, seatCount: number): Promise<GameHandle<TState>> {

@@ -35,6 +35,11 @@ export interface PlayerHandle {
   readonly id: PlayerId
   readonly number: number
   readonly name: string
+
+  join<TState>(game: GameHandle<TState>): Promise<void>
+  startTurn<TState>(game: GameHandle<TState>): Promise<void>
+  makeMove<TState>(game: GameHandle<TState>, movePayload: string): Promise<void>
+  endTurn<TState>(game: GameHandle<TState>, statePayload: string): Promise<void>
 }
 
 export interface GameHandle<TState> {
@@ -43,12 +48,8 @@ export interface GameHandle<TState> {
   readonly state: TState | null
   readonly objects: readonly GameObjectLock[]
 
-  join(player: PlayerHandle): Promise<void>
   start(adminPlayer: PlayerHandle): Promise<void>
   end(adminPlayer: PlayerHandle): Promise<void>
-  startTurn(player: PlayerHandle): Promise<void>
-  makeMove(player: PlayerHandle, movePayload: string): Promise<void>
-  endTurn(player: PlayerHandle, statePayload: string): Promise<void>
 
   onEvent(cb: (event: GameEvent) => void): ListenDisposer
   onStateChange(cb: (state: TState | null) => void): ListenDisposer
@@ -72,5 +73,5 @@ export interface HousePartyClient<TState> {
     roomId: string,
     name: string,
     options?: JoinRoomOptions,
-  ): Promise<{ room: RoomHandle<TState>; player: PlayerHandle }>
+  ): Promise<PlayerHandle>
 }

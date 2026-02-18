@@ -65,6 +65,11 @@ export type GameStartedEvent = GameEventBase & {
 
 }
 
+export type GameEndedEvent = GameEventBase & {
+  name: 'GameEndedEvent'
+
+}
+
 export type GameEvent =
   | ControlObjectEvent
   | ReleaseObjectEvent
@@ -76,6 +81,7 @@ export type GameEvent =
   | GameCreatedEvent
   | PlayerJoinedGameEvent
   | GameStartedEvent
+  | GameEndedEvent
 
 export type GameEventName = GameEvent['name']
 
@@ -156,6 +162,11 @@ export const GAME_EVENT_SCHEMAS: readonly EventSchema[] = [
   },
   {
     name: 'GameStartedEvent',
+    fields: [],
+    objectLockEffect: 'none',
+  },
+  {
+    name: 'GameEndedEvent',
     fields: [],
     objectLockEffect: 'none',
   }

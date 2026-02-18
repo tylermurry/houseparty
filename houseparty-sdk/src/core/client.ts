@@ -66,7 +66,7 @@ export class HousePartyClientImpl<TState> implements HousePartyClient<TState> {
 
     this.trace.log('client', 'Joined room.', { roomId, player })
 
-    return { room, player }
+    return player
   }
 }
 

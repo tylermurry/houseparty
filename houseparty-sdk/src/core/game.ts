@@ -45,11 +45,6 @@ export class GameHandleImpl<TState> implements GameHandle<TState> {
     return this._objects
   }
 
-  async join(player: PlayerHandle): Promise<void> {
-    this.trace.log('game', 'Joining turn-based game.', { gameId: this.id, playerId: player.id })
-    await this.http.joinGame(this.id, player.id)
-  }
-
   async start(adminPlayer: PlayerHandle): Promise<void> {
     this.trace.log('game', 'Starting turn-based game.', { gameId: this.id, adminPlayerId: adminPlayer.id })
     await this.http.startGame(this.id, adminPlayer.id)
@@ -58,25 +53,6 @@ export class GameHandleImpl<TState> implements GameHandle<TState> {
   async end(adminPlayer: PlayerHandle): Promise<void> {
     this.trace.log('game', 'Ending turn-based game.', { gameId: this.id, adminPlayerId: adminPlayer.id })
     await this.http.endGame(this.id, adminPlayer.id)
-  }
-
-  async startTurn(player: PlayerHandle): Promise<void> {
-    this.trace.log('game', 'Starting turn.', { gameId: this.id, playerId: player.id })
-    await this.http.startTurn(this.id, player.id)
-  }
-
-  async makeMove(player: PlayerHandle, movePayload: string): Promise<void> {
-    this.trace.log('game', 'Making move.', { gameId: this.id, playerId: player.id, movePayload })
-    await this.http.makeMove(this.id, player.id, movePayload)
-  }
-
-  async endTurn(player: PlayerHandle, statePayload: string): Promise<void> {
-    this.trace.log('game', 'Ending turn.', { gameId: this.id, playerId: player.id })
-    const maybeState = await this.http.endTurn(this.id, player.id, statePayload)
-
-    if (maybeState !== null) {
-      this.ingestRawState(maybeState)
-    }
   }
 
   onEvent(cb: (event: GameEvent) => void): () => void {
