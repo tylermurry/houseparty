@@ -49,6 +49,22 @@ export type SubmitActionEvent = GameEventBase & {
   action: string
 }
 
+export type GameCreatedEvent = GameEventBase & {
+  name: 'GameCreatedEvent'
+
+  gameId: string
+}
+
+export type PlayerJoinedGameEvent = GameEventBase & {
+  name: 'PlayerJoinedGameEvent'
+
+}
+
+export type GameStartedEvent = GameEventBase & {
+  name: 'GameStartedEvent'
+
+}
+
 export type GameEvent =
   | ControlObjectEvent
   | ReleaseObjectEvent
@@ -57,6 +73,9 @@ export type GameEvent =
   | ReleaseRoleEvent
   | RevokeRoleEvent
   | SubmitActionEvent
+  | GameCreatedEvent
+  | PlayerJoinedGameEvent
+  | GameStartedEvent
 
 export type GameEventName = GameEvent['name']
 
@@ -121,6 +140,23 @@ export const GAME_EVENT_SCHEMAS: readonly EventSchema[] = [
     fields: [
     { name: 'action', type: 'string' }
   ],
+    objectLockEffect: 'none',
+  },
+  {
+    name: 'GameCreatedEvent',
+    fields: [
+    { name: 'gameId', type: 'string' }
+  ],
+    objectLockEffect: 'none',
+  },
+  {
+    name: 'PlayerJoinedGameEvent',
+    fields: [],
+    objectLockEffect: 'none',
+  },
+  {
+    name: 'GameStartedEvent',
+    fields: [],
     objectLockEffect: 'none',
   }
 ] as const

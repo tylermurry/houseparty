@@ -43,6 +43,9 @@ export interface GameHandle<TState> {
   readonly state: TState | null
   readonly objects: readonly GameObjectLock[]
 
+  join(player: PlayerHandle): Promise<void>
+  start(adminPlayer: PlayerHandle): Promise<void>
+  end(adminPlayer: PlayerHandle): Promise<void>
   startTurn(player: PlayerHandle): Promise<void>
   makeMove(player: PlayerHandle, movePayload: string): Promise<void>
   endTurn(player: PlayerHandle, statePayload: string): Promise<void>
@@ -59,7 +62,7 @@ export interface RoomHandle<TState> {
   readonly players: readonly PlayerSummary[]
 
   listenForEvents(cb: (event: RoomEvent) => void): ListenDisposer
-  startTurnBasedGame(adminPlayer: PlayerHandle): Promise<GameHandle<TState>>
+  createTurnBasedGame(adminPlayer: PlayerHandle, seatCount: number): Promise<GameHandle<TState>>
   dispose(): Promise<void>
 }
 

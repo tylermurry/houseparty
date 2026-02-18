@@ -17,7 +17,7 @@ Accept: application/json
 
 ### --- Stop Game -----------------------------------------------------------------
 
-POST {{Server_HostAddress}}/api/engine/turn-based-game/stop-game
+POST {{Server_HostAddress}}/api/engine/turn-based-game/end-game
 Content-Type: application/json
 Accept: application/json
 

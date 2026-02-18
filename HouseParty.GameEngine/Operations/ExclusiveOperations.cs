@@ -13,7 +13,7 @@ public interface IExclusiveOperations
     Task<OperationResult> RevokeRoleAsync(OperationContext context, string roleId);
 }
 
-public sealed class ExclusiveOperations(IPrimitives primitives, IPolicies policies) : Operations(primitives), IExclusiveOperations
+public sealed class ExclusiveOperations(IPrimitives primitives, IPolicies policies, IGameOperations gameOperations) : Operations(primitives), IExclusiveOperations
 {
     private readonly IPrimitives _primitives = primitives;
 
@@ -42,7 +42,9 @@ public sealed class ExclusiveOperations(IPrimitives primitives, IPolicies polici
 
     public async Task<OperationResult> RevokeObjectControl(OperationContext context, string objectId)
     {
-        if (!await policies.IsPlayerAdminRole(context.GameId, context.PlayerId))
+        var metadata = await gameOperations.GetMetadata(context);
+
+        if (!policies.IsPlayerAdminRole(metadata, context.PlayerId))
             return new OperationResult(false, []);
 
         var released = await _primitives.ReleaseTokenAsync(context.GameId, objectId);
@@ -78,7 +80,9 @@ public sealed class ExclusiveOperations(IPrimitives primitives, IPolicies polici
 
     public async Task<OperationResult> RevokeRoleAsync(OperationContext context, string roleId)
     {
-        if (!await policies.IsPlayerAdminRole(context.GameId, context.PlayerId))
+        var metadata = await gameOperations.GetMetadata(context);
+
+        if (!policies.IsPlayerAdminRole(metadata, context.PlayerId))
             return new OperationResult(false, []);
 
         var released = await _primitives.ReleaseTokenAsync(context.GameId, roleId);

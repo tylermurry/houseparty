@@ -20,11 +20,17 @@ public class TurnBasedGame(
 {
     private readonly IPolicies _policies = policies;
     private readonly IExclusiveOperations _exclusiveOperations = exclusiveOperations;
+    private readonly IGameOperations _gameOperations = gameOperations;
 
     public async Task<List<GameEvent>> StartTurn(OperationContext context)
     {
-        if (!await _policies.IsGameStarted(context.GameId))
+        var metadata = await _gameOperations.GetMetadata(context);
+
+        if (!_policies.IsGameStarted(metadata))
             throw new Exception("Game not started");
+
+        if (!_policies.IsPlayerSeated(metadata, context.PlayerId))
+            throw new Exception("Only seated players can perform this action");
 
         var controlTurnResult = await _exclusiveOperations.ControlObject(context, Policies.TurnTokenId);
 
@@ -48,8 +54,13 @@ public class TurnBasedGame(
 
     public async Task<(List<GameEvent> Events, string StatePayload)> EndTurn(OperationContext context, string statePayload)
     {
-        if (!await _policies.IsGameStarted(context.GameId))
+        var metadata = await _gameOperations.GetMetadata(context);
+
+        if (!_policies.IsGameStarted(metadata))
             throw new Exception("Game not started");
+
+        if (!_policies.IsPlayerSeated(metadata, context.PlayerId))
+            throw new Exception("Only seated players can perform this action");
 
         if (!await _policies.IsTurnActive(context.GameId))
             throw new Exception("No active turn");
@@ -71,7 +82,7 @@ public class TurnBasedGame(
             throw new Exception("Failed to release turn");
 
         var savedState = await commitOperations.SaveData(context, statePayload);
-        var eventsCleared = await gameOperations.ClearEvents(context);
+        var eventsCleared = await _gameOperations.ClearEvents(context);
 
         if (!eventsCleared)
             throw new Exception("Failed to clear events");
@@ -81,8 +92,13 @@ public class TurnBasedGame(
 
     public async Task<List<GameEvent>> MakeMove(OperationContext context, string move)
     {
-        if (!await _policies.IsGameStarted(context.GameId))
+        var metadata = await _gameOperations.GetMetadata(context);
+
+        if (!_policies.IsGameStarted(metadata))
             throw new Exception("Game not started");
+
+        if (!_policies.IsPlayerSeated(metadata, context.PlayerId))
+            throw new Exception("Only seated players can perform this action");
 
         if (!await _policies.IsActivePlayer(context.GameId, context.PlayerId))
             throw new Exception("Only active player can make a move");

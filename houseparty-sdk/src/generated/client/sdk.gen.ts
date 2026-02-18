@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { PostApiEngineTurnBasedGameEndTurnData, PostApiEngineTurnBasedGameEndTurnResponses, PostApiEngineTurnBasedGameMakeMoveData, PostApiEngineTurnBasedGameMakeMoveResponses, PostApiEngineTurnBasedGameStartGameData, PostApiEngineTurnBasedGameStartGameResponses, PostApiEngineTurnBasedGameStartTurnData, PostApiEngineTurnBasedGameStartTurnResponses, PostApiEngineTurnBasedGameStopGameData, PostApiEngineTurnBasedGameStopGameResponses, PostApiRoomsByRoomIdJoinData, PostApiRoomsByRoomIdJoinResponses, PostApiRoomsByRoomIdMouseData, PostApiRoomsByRoomIdMouseResponses, PostApiRoomsData, PostApiRoomsResponses, PostApiSignalrNegotiateData, PostApiSignalrNegotiateResponses } from './types.gen';
+import type { PostApiEngineTurnBasedGameCreateGameData, PostApiEngineTurnBasedGameCreateGameResponses, PostApiEngineTurnBasedGameEndGameData, PostApiEngineTurnBasedGameEndGameResponses, PostApiEngineTurnBasedGameEndTurnData, PostApiEngineTurnBasedGameEndTurnResponses, PostApiEngineTurnBasedGameJoinGameData, PostApiEngineTurnBasedGameJoinGameResponses, PostApiEngineTurnBasedGameMakeMoveData, PostApiEngineTurnBasedGameMakeMoveResponses, PostApiEngineTurnBasedGameStartGameData, PostApiEngineTurnBasedGameStartGameResponses, PostApiEngineTurnBasedGameStartTurnData, PostApiEngineTurnBasedGameStartTurnResponses, PostApiRoomsByRoomIdJoinData, PostApiRoomsByRoomIdJoinResponses, PostApiRoomsByRoomIdMouseData, PostApiRoomsByRoomIdMouseResponses, PostApiRoomsData, PostApiRoomsResponses, PostApiSignalrNegotiateData, PostApiSignalrNegotiateResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -40,6 +40,24 @@ export const postApiRoomsByRoomIdMouse = <ThrowOnError extends boolean = false>(
 
 export const postApiSignalrNegotiate = <ThrowOnError extends boolean = false>(options?: Options<PostApiSignalrNegotiateData, ThrowOnError>) => (options?.client ?? client).post<PostApiSignalrNegotiateResponses, unknown, ThrowOnError>({ url: '/api/signalr/negotiate', ...options });
 
+export const postApiEngineTurnBasedGameCreateGame = <ThrowOnError extends boolean = false>(options: Options<PostApiEngineTurnBasedGameCreateGameData, ThrowOnError>) => (options.client ?? client).post<PostApiEngineTurnBasedGameCreateGameResponses, unknown, ThrowOnError>({
+    url: '/api/engine/turn-based-game/create-game',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const postApiEngineTurnBasedGameJoinGame = <ThrowOnError extends boolean = false>(options: Options<PostApiEngineTurnBasedGameJoinGameData, ThrowOnError>) => (options.client ?? client).post<PostApiEngineTurnBasedGameJoinGameResponses, unknown, ThrowOnError>({
+    url: '/api/engine/turn-based-game/join-game',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
 export const postApiEngineTurnBasedGameStartGame = <ThrowOnError extends boolean = false>(options: Options<PostApiEngineTurnBasedGameStartGameData, ThrowOnError>) => (options.client ?? client).post<PostApiEngineTurnBasedGameStartGameResponses, unknown, ThrowOnError>({
     url: '/api/engine/turn-based-game/start-game',
     ...options,
@@ -49,8 +67,8 @@ export const postApiEngineTurnBasedGameStartGame = <ThrowOnError extends boolean
     }
 });
 
-export const postApiEngineTurnBasedGameStopGame = <ThrowOnError extends boolean = false>(options: Options<PostApiEngineTurnBasedGameStopGameData, ThrowOnError>) => (options.client ?? client).post<PostApiEngineTurnBasedGameStopGameResponses, unknown, ThrowOnError>({
-    url: '/api/engine/turn-based-game/stop-game',
+export const postApiEngineTurnBasedGameEndGame = <ThrowOnError extends boolean = false>(options: Options<PostApiEngineTurnBasedGameEndGameData, ThrowOnError>) => (options.client ?? client).post<PostApiEngineTurnBasedGameEndGameResponses, unknown, ThrowOnError>({
+    url: '/api/engine/turn-based-game/end-game',
     ...options,
     headers: {
         'Content-Type': 'application/json',

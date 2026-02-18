@@ -164,6 +164,104 @@
         }
       }
     },
+    "/api/engine/turn-based-game/create-game": {
+      "post": {
+        "tags": [
+          "TurnBasedGame"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGameRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGameRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateGameResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateGameResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateGameResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/engine/turn-based-game/join-game": {
+      "post": {
+        "tags": [
+          "TurnBasedGame"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinGameRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinGameRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinGameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/JoinGameResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JoinGameResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JoinGameResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/engine/turn-based-game/start-game": {
       "post": {
         "tags": [
@@ -213,7 +311,7 @@
         }
       }
     },
-    "/api/engine/turn-based-game/stop-game": {
+    "/api/engine/turn-based-game/end-game": {
       "post": {
         "tags": [
           "TurnBasedGame"
@@ -222,17 +320,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/StopGameRequest"
+                "$ref": "#/components/schemas/EndGameRequest"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/StopGameRequest"
+                "$ref": "#/components/schemas/EndGameRequest"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/StopGameRequest"
+                "$ref": "#/components/schemas/EndGameRequest"
               }
             }
           },
@@ -244,17 +342,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/StopGameResponse"
+                  "$ref": "#/components/schemas/EndGameResponse"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/StopGameResponse"
+                  "$ref": "#/components/schemas/EndGameResponse"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/StopGameResponse"
+                  "$ref": "#/components/schemas/EndGameResponse"
                 }
               }
             }
@@ -412,6 +510,81 @@
   },
   "components": {
     "schemas": {
+      "CreateGameRequest": {
+        "required": [
+          "playerId",
+          "seatCount"
+        ],
+        "type": "object",
+        "properties": {
+          "playerId": {
+            "type": "string"
+          },
+          "seatCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "CreateGameResponse": {
+        "required": [
+          "gameCreated"
+        ],
+        "type": "object",
+        "properties": {
+          "gameCreated": {
+            "type": "boolean"
+          },
+          "gameId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "errorMessage": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "EndGameRequest": {
+        "required": [
+          "gameId",
+          "playerId"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "string"
+          },
+          "playerId": {
+            "type": "string"
+          }
+        }
+      },
+      "EndGameResponse": {
+        "required": [
+          "gameEnded"
+        ],
+        "type": "object",
+        "properties": {
+          "gameEnded": {
+            "type": "boolean"
+          },
+          "errorMessage": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "EndTurnRequest": {
         "required": [
           "gameId",
@@ -445,6 +618,38 @@
               "null",
               "string"
             ]
+          },
+          "errorMessage": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "JoinGameRequest": {
+        "required": [
+          "gameId",
+          "playerId"
+        ],
+        "type": "object",
+        "properties": {
+          "gameId": {
+            "type": "string"
+          },
+          "playerId": {
+            "type": "string"
+          }
+        }
+      },
+      "JoinGameResponse": {
+        "required": [
+          "joined"
+        ],
+        "type": "object",
+        "properties": {
+          "joined": {
+            "type": "boolean"
           },
           "errorMessage": {
             "type": [
@@ -619,10 +824,14 @@
       },
       "StartGameRequest": {
         "required": [
+          "gameId",
           "playerId"
         ],
         "type": "object",
         "properties": {
+          "gameId": {
+            "type": "string"
+          },
           "playerId": {
             "type": "string"
           }
@@ -673,38 +882,6 @@
         "type": "object",
         "properties": {
           "turnStarted": {
-            "type": "boolean"
-          },
-          "errorMessage": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        }
-      },
-      "StopGameRequest": {
-        "required": [
-          "gameId",
-          "playerId"
-        ],
-        "type": "object",
-        "properties": {
-          "gameId": {
-            "type": "string"
-          },
-          "playerId": {
-            "type": "string"
-          }
-        }
-      },
-      "StopGameResponse": {
-        "required": [
-          "gameStopped"
-        ],
-        "type": "object",
-        "properties": {
-          "gameStopped": {
             "type": "boolean"
           },
           "errorMessage": {

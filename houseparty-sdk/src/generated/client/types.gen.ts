@@ -4,6 +4,27 @@ export type ClientOptions = {
     baseUrl: `${string}://${string}` | (string & {});
 };
 
+export type CreateGameRequest = {
+    playerId: string;
+    seatCount: number | string;
+};
+
+export type CreateGameResponse = {
+    gameCreated: boolean;
+    gameId?: null | string;
+    errorMessage?: null | string;
+};
+
+export type EndGameRequest = {
+    gameId: string;
+    playerId: string;
+};
+
+export type EndGameResponse = {
+    gameEnded: boolean;
+    errorMessage?: null | string;
+};
+
 export type EndTurnRequest = {
     gameId: string;
     playerId: string;
@@ -13,6 +34,16 @@ export type EndTurnRequest = {
 export type EndTurnResponse = {
     turnEnded: boolean;
     statePayload?: null | string;
+    errorMessage?: null | string;
+};
+
+export type JoinGameRequest = {
+    gameId: string;
+    playerId: string;
+};
+
+export type JoinGameResponse = {
+    joined: boolean;
     errorMessage?: null | string;
 };
 
@@ -60,6 +91,7 @@ export type SignalRNegotiation = {
 };
 
 export type StartGameRequest = {
+    gameId: string;
     playerId: string;
 };
 
@@ -76,16 +108,6 @@ export type StartTurnRequest = {
 
 export type StartTurnResponse = {
     turnStarted: boolean;
-    errorMessage?: null | string;
-};
-
-export type StopGameRequest = {
-    gameId: string;
-    playerId: string;
-};
-
-export type StopGameResponse = {
-    gameStopped: boolean;
     errorMessage?: null | string;
 };
 
@@ -155,6 +177,38 @@ export type PostApiSignalrNegotiateResponses = {
 
 export type PostApiSignalrNegotiateResponse = PostApiSignalrNegotiateResponses[keyof PostApiSignalrNegotiateResponses];
 
+export type PostApiEngineTurnBasedGameCreateGameData = {
+    body: CreateGameRequest;
+    path?: never;
+    query?: never;
+    url: '/api/engine/turn-based-game/create-game';
+};
+
+export type PostApiEngineTurnBasedGameCreateGameResponses = {
+    /**
+     * OK
+     */
+    200: CreateGameResponse;
+};
+
+export type PostApiEngineTurnBasedGameCreateGameResponse = PostApiEngineTurnBasedGameCreateGameResponses[keyof PostApiEngineTurnBasedGameCreateGameResponses];
+
+export type PostApiEngineTurnBasedGameJoinGameData = {
+    body: JoinGameRequest;
+    path?: never;
+    query?: never;
+    url: '/api/engine/turn-based-game/join-game';
+};
+
+export type PostApiEngineTurnBasedGameJoinGameResponses = {
+    /**
+     * OK
+     */
+    200: JoinGameResponse;
+};
+
+export type PostApiEngineTurnBasedGameJoinGameResponse = PostApiEngineTurnBasedGameJoinGameResponses[keyof PostApiEngineTurnBasedGameJoinGameResponses];
+
 export type PostApiEngineTurnBasedGameStartGameData = {
     body: StartGameRequest;
     path?: never;
@@ -171,21 +225,21 @@ export type PostApiEngineTurnBasedGameStartGameResponses = {
 
 export type PostApiEngineTurnBasedGameStartGameResponse = PostApiEngineTurnBasedGameStartGameResponses[keyof PostApiEngineTurnBasedGameStartGameResponses];
 
-export type PostApiEngineTurnBasedGameStopGameData = {
-    body: StopGameRequest;
+export type PostApiEngineTurnBasedGameEndGameData = {
+    body: EndGameRequest;
     path?: never;
     query?: never;
-    url: '/api/engine/turn-based-game/stop-game';
+    url: '/api/engine/turn-based-game/end-game';
 };
 
-export type PostApiEngineTurnBasedGameStopGameResponses = {
+export type PostApiEngineTurnBasedGameEndGameResponses = {
     /**
      * OK
      */
-    200: StopGameResponse;
+    200: EndGameResponse;
 };
 
-export type PostApiEngineTurnBasedGameStopGameResponse = PostApiEngineTurnBasedGameStopGameResponses[keyof PostApiEngineTurnBasedGameStopGameResponses];
+export type PostApiEngineTurnBasedGameEndGameResponse = PostApiEngineTurnBasedGameEndGameResponses[keyof PostApiEngineTurnBasedGameEndGameResponses];
 
 export type PostApiEngineTurnBasedGameStartTurnData = {
     body: StartTurnRequest;

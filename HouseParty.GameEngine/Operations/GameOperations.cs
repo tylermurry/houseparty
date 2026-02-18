@@ -1,10 +1,13 @@
 using HouseParty.GameEngine.Models;
 using HouseParty.GameEngine.Primitives;
+using System.Text.Json;
 
 namespace HouseParty.GameEngine.Operations;
 
 public interface IGameOperations
 {
+    Task<GameMetadata?> GetMetadata(OperationContext context);
+    Task SaveMetadata(OperationContext context, GameMetadata metadata);
     Task<bool> ClearTokens(OperationContext context);
     Task<bool> ClearEvents(OperationContext context);
     Task<bool> ClearData(OperationContext context);
@@ -16,10 +19,29 @@ public interface IGameOperations
 public class GameOperations(IPolicies policies, IPrimitives primitives) : Operations(primitives), IGameOperations
 {
     private readonly IPrimitives _primitives = primitives;
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private static string MetadataKey(string gameId) => $"game:{gameId}:metadata";
+
+    public async Task<GameMetadata?> GetMetadata(OperationContext context)
+    {
+        var metadataJson = await _primitives.GetValueAsync(MetadataKey(context.GameId));
+        if (string.IsNullOrWhiteSpace(metadataJson))
+            return null;
+
+        return JsonSerializer.Deserialize<GameMetadata>(metadataJson, JsonOptions);
+    }
+
+    public async Task SaveMetadata(OperationContext context, GameMetadata metadata)
+    {
+        var metadataJson = JsonSerializer.Serialize(metadata, JsonOptions);
+        await _primitives.SetValueAsync(MetadataKey(context.GameId), metadataJson);
+    }
 
     public async Task<bool> ClearTokens(OperationContext context)
     {
-        if (!await policies.IsPlayerAdminRole(context.GameId, context.PlayerId))
+        var metadata = await GetMetadata(context);
+
+        if (!policies.IsPlayerAdminRole(metadata, context.PlayerId))
             return false;
 
         await _primitives.ClearTokensAsync(context.GameId);
@@ -28,7 +50,9 @@ public class GameOperations(IPolicies policies, IPrimitives primitives) : Operat
 
     public async Task<bool> ClearEvents(OperationContext context)
     {
-        if (!await policies.IsPlayerAdminRole(context.GameId, context.PlayerId))
+        var metadata = await GetMetadata(context);
+
+        if (!policies.IsPlayerAdminRole(metadata, context.PlayerId))
             return false;
 
         await _primitives.ClearEventsAsync(context.GameId);
@@ -37,7 +61,9 @@ public class GameOperations(IPolicies policies, IPrimitives primitives) : Operat
 
     public async Task<bool> ClearData(OperationContext context)
     {
-        if (!await policies.IsPlayerAdminRole(context.GameId, context.PlayerId))
+        var metadata = await GetMetadata(context);
+
+        if (!policies.IsPlayerAdminRole(metadata, context.PlayerId))
             return false;
 
         await _primitives.ClearDataAsync(context.GameId);
@@ -46,12 +72,16 @@ public class GameOperations(IPolicies policies, IPrimitives primitives) : Operat
 
     public async Task<bool> ClearGame(OperationContext context)
     {
-        if (!await policies.IsPlayerAdminRole(context.GameId, context.PlayerId))
+        var metadata = await GetMetadata(context);
+
+        if (!policies.IsPlayerAdminRole(metadata, context.PlayerId))
             return false;
 
         var tokensCleared = await ClearTokens(context);
         var eventsCleared = await ClearEvents(context);
         var dataCleared = await ClearData(context);
+
+        await _primitives.DeleteValueAsync(MetadataKey(context.GameId));
 
         return tokensCleared && eventsCleared && dataCleared;
     }

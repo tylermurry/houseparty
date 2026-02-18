@@ -94,9 +94,9 @@ export class RoomHandleImpl<TState> implements RoomHandle<TState> {
     }
   }
 
-  async startTurnBasedGame(adminPlayer: PlayerHandle): Promise<GameHandle<TState>> {
-    this.trace.log('room', 'Starting turn-based game.', { roomId: this.id, adminPlayerId: adminPlayer.id })
-    const gameId = await this.http.startGame(adminPlayer.id)
+  async createTurnBasedGame(adminPlayer: PlayerHandle, seatCount: number): Promise<GameHandle<TState>> {
+    this.trace.log('room', 'Creating turn-based game.', { roomId: this.id, adminPlayerId: adminPlayer.id, seatCount })
+    const gameId = await this.http.createGame(adminPlayer.id, seatCount)
 
     const game = new GameHandleImpl<TState>({
       id: gameId,
@@ -112,23 +112,23 @@ export class RoomHandleImpl<TState> implements RoomHandle<TState> {
       this.joinedGroups.add(gameId)
     }
 
-    this.trace.log('room', 'Started turn-based game.', { roomId: this.id, gameId })
+    this.trace.log('room', 'Created turn-based game.', { roomId: this.id, gameId })
 
     return game
   }
 
-  async stopTurnBasedGame(adminPlayer: PlayerHandle): Promise<void> {
+  async endTurnBasedGame(adminPlayer: PlayerHandle): Promise<void> {
     if (!this.activeGame) {
       return
     }
 
-    this.trace.log('room', 'Stopping turn-based game.', {
+    this.trace.log('room', 'Ending turn-based game.', {
       roomId: this.id,
       gameId: this.activeGame.id,
       adminPlayerId: adminPlayer.id,
     })
 
-    await this.http.stopGame(this.activeGame.id, adminPlayer.id)
+    await this.activeGame.end(adminPlayer)
     await this.activeGame.dispose()
     this.activeGame = null
   }

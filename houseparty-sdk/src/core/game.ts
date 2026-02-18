@@ -45,6 +45,21 @@ export class GameHandleImpl<TState> implements GameHandle<TState> {
     return this._objects
   }
 
+  async join(player: PlayerHandle): Promise<void> {
+    this.trace.log('game', 'Joining turn-based game.', { gameId: this.id, playerId: player.id })
+    await this.http.joinGame(this.id, player.id)
+  }
+
+  async start(adminPlayer: PlayerHandle): Promise<void> {
+    this.trace.log('game', 'Starting turn-based game.', { gameId: this.id, adminPlayerId: adminPlayer.id })
+    await this.http.startGame(this.id, adminPlayer.id)
+  }
+
+  async end(adminPlayer: PlayerHandle): Promise<void> {
+    this.trace.log('game', 'Ending turn-based game.', { gameId: this.id, adminPlayerId: adminPlayer.id })
+    await this.http.endGame(this.id, adminPlayer.id)
+  }
+
   async startTurn(player: PlayerHandle): Promise<void> {
     this.trace.log('game', 'Starting turn.', { gameId: this.id, playerId: player.id })
     await this.http.startTurn(this.id, player.id)

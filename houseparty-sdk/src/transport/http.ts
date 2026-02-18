@@ -1,11 +1,13 @@
 import { createClient as createApiClient, createConfig } from '../generated/client/client'
 import type { Client } from '../generated/client/client'
 import {
+  postApiEngineTurnBasedGameCreateGame,
   postApiEngineTurnBasedGameEndTurn,
+  postApiEngineTurnBasedGameJoinGame,
   postApiEngineTurnBasedGameMakeMove,
   postApiEngineTurnBasedGameStartGame,
   postApiEngineTurnBasedGameStartTurn,
-  postApiEngineTurnBasedGameStopGame,
+  postApiEngineTurnBasedGameEndGame,
   postApiRooms,
   postApiRoomsByRoomIdJoin,
   postApiSignalrNegotiate,
@@ -116,46 +118,88 @@ export class HttpTransport {
     }
   }
 
-  async startGame(playerId: string): Promise<string> {
-    this.trace.log('http', 'POST /api/engine/turn-based-game/start-game', { playerId })
+  async createGame(playerId: string, seatCount: number): Promise<string> {
+    this.trace.log('http', 'POST /api/engine/turn-based-game/create-game', { playerId, seatCount })
     try {
-      const data = await postApiEngineTurnBasedGameStartGame({
+      const data = await postApiEngineTurnBasedGameCreateGame({
         client: this.client,
         throwOnError: true,
-        body: { playerId },
+        body: { playerId, seatCount },
       })
 
-      if (!data.data.gameStarted || !data.data.gameId) {
-        throw new HousePartyError('GAME_COMMAND_REJECTED', data.data.errorMessage ?? 'Could not start game.')
+      if (!data.data.gameCreated || !data.data.gameId) {
+        throw new HousePartyError('GAME_COMMAND_REJECTED', data.data.errorMessage ?? 'Could not create game.')
       }
 
-      this.trace.log('http', 'Start game accepted.', { gameId: data.data.gameId })
+      this.trace.log('http', 'Create game accepted.', { gameId: data.data.gameId })
       return data.data.gameId
     } catch (error) {
-      this.trace.error('http', 'Start game failed.', { error })
+      this.trace.error('http', 'Create game failed.', { error })
       if (error instanceof HousePartyError) throw error
-      mapError('GAME_COMMAND_REJECTED', 'Failed to start game.', error)
+      mapError('GAME_COMMAND_REJECTED', 'Failed to create game.', error)
     }
   }
 
-  async stopGame(gameId: string, playerId: string): Promise<void> {
-    this.trace.log('http', 'POST /api/engine/turn-based-game/stop-game', { gameId, playerId })
+  async joinGame(gameId: string, playerId: string): Promise<void> {
+    this.trace.log('http', 'POST /api/engine/turn-based-game/join-game', { gameId, playerId })
     try {
-      const data = await postApiEngineTurnBasedGameStopGame({
+      const data = await postApiEngineTurnBasedGameJoinGame({
         client: this.client,
         throwOnError: true,
         body: { gameId, playerId },
       })
 
-      if (!data.data.gameStopped) {
-        throw new HousePartyError('GAME_COMMAND_REJECTED', data.data.errorMessage ?? 'Could not stop game.')
+      if (!data.data.joined) {
+        throw new HousePartyError('GAME_COMMAND_REJECTED', data.data.errorMessage ?? 'Could not join game.')
       }
 
-      this.trace.log('http', 'Stop game accepted.', { gameId })
+      this.trace.log('http', 'Join game accepted.', { gameId, playerId })
     } catch (error) {
-      this.trace.error('http', 'Stop game failed.', { gameId, error })
+      this.trace.error('http', 'Join game failed.', { gameId, playerId, error })
       if (error instanceof HousePartyError) throw error
-      mapError('GAME_COMMAND_REJECTED', 'Failed to stop game.', error)
+      mapError('GAME_COMMAND_REJECTED', 'Failed to join game.', error)
+    }
+  }
+
+  async startGame(gameId: string, playerId: string): Promise<void> {
+    this.trace.log('http', 'POST /api/engine/turn-based-game/start-game', { gameId, playerId })
+    try {
+      const data = await postApiEngineTurnBasedGameStartGame({
+        client: this.client,
+        throwOnError: true,
+        body: { gameId, playerId },
+      })
+
+      if (!data.data.gameStarted) {
+        throw new HousePartyError('GAME_COMMAND_REJECTED', data.data.errorMessage ?? 'Could not start game.')
+      }
+
+      this.trace.log('http', 'Start game accepted.', { gameId, playerId })
+    } catch (error) {
+      this.trace.error('http', 'Start game failed.', { gameId, playerId, error })
+      if (error instanceof HousePartyError) throw error
+      mapError('GAME_COMMAND_REJECTED', 'Failed to start game.', error)
+    }
+  }
+
+  async endGame(gameId: string, playerId: string): Promise<void> {
+    this.trace.log('http', 'POST /api/engine/turn-based-game/end-game', { gameId, playerId })
+    try {
+      const data = await postApiEngineTurnBasedGameEndGame({
+        client: this.client,
+        throwOnError: true,
+        body: { gameId, playerId },
+      })
+
+      if (!data.data.gameEnded) {
+        throw new HousePartyError('GAME_COMMAND_REJECTED', data.data.errorMessage ?? 'Could not end game.')
+      }
+
+      this.trace.log('http', 'End game accepted.', { gameId })
+    } catch (error) {
+      this.trace.error('http', 'End game failed.', { gameId, error })
+      if (error instanceof HousePartyError) throw error
+      mapError('GAME_COMMAND_REJECTED', 'Failed to end game.', error)
     }
   }
 

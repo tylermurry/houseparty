@@ -10,6 +10,9 @@ namespace HouseParty.GameEngine.Models;
 [JsonDerivedType(typeof(ReleaseRoleEvent), nameof(ReleaseRoleEvent))]
 [JsonDerivedType(typeof(RevokeRoleEvent), nameof(RevokeRoleEvent))]
 [JsonDerivedType(typeof(SubmitActionEvent), nameof(SubmitActionEvent))]
+[JsonDerivedType(typeof(GameCreatedEvent), nameof(GameCreatedEvent))]
+[JsonDerivedType(typeof(PlayerJoinedGameEvent), nameof(PlayerJoinedGameEvent))]
+[JsonDerivedType(typeof(GameStartedEvent), nameof(GameStartedEvent))]
 public abstract record GameEvent
 {
     public long Sequence { get; set; }
@@ -28,3 +31,9 @@ public sealed record RevokeRoleEvent : GameEvent { public override string Name =
 
 // Contested Operation Events
 public sealed record SubmitActionEvent(string action) : GameEvent { public override string Name => nameof(SubmitActionEvent); }
+
+// Game Lifecycle Events
+public sealed record GameCreatedEvent(string GameId) : GameEvent { public override string Name => nameof(GameCreatedEvent); }
+public sealed record PlayerJoinedGameEvent : GameEvent { public override string Name => nameof(PlayerJoinedGameEvent); }
+public sealed record GameStartedEvent : GameEvent { public override string Name => nameof(GameStartedEvent); }
+public sealed record GameEndedEvent : GameEvent { public override string Name => nameof(GameEndedEvent); }

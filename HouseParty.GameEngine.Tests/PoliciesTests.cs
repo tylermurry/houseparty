@@ -1,4 +1,5 @@
 using FluentAssertions;
+using HouseParty.GameEngine.Models;
 using HouseParty.GameEngine.Primitives;
 using Moq;
 
@@ -6,118 +7,61 @@ namespace HouseParty.GameEngine.Tests;
 
 public sealed class PoliciesTests
 {
-    private const string GameId = "game-1";
     private const string PlayerId = "player-1";
 
     [Fact]
-    public async Task IsGameStarted_ReturnsFalse_WhenAdminRoleHasNoHolder()
+    public void IsGameCreated_ReturnsTrue_WhenMetadataExists()
     {
-        var primitives = new Mock<IPrimitives>(MockBehavior.Strict);
-        primitives.Setup(x => x.GetTokenHolderAsync(GameId, Policies.AdminRoleId)).ReturnsAsync((string?)null);
+        var policies = new Policies(new Mock<IPrimitives>().Object);
+        var metadata = new GameMetadata("created", 2, [], "player-1");
 
-        var policies = new Policies(primitives.Object);
-
-        var result = await policies.IsGameStarted(GameId);
-
-        result.Should().BeFalse();
-        primitives.VerifyAll();
-    }
-
-    [Fact]
-    public async Task IsGameStarted_ReturnsTrue_WhenAdminRoleHasHolder()
-    {
-        var primitives = new Mock<IPrimitives>(MockBehavior.Strict);
-        primitives.Setup(x => x.GetTokenHolderAsync(GameId, Policies.AdminRoleId)).ReturnsAsync("host-player");
-
-        var policies = new Policies(primitives.Object);
-
-        var result = await policies.IsGameStarted(GameId);
+        var result = policies.IsGameCreated(metadata);
 
         result.Should().BeTrue();
-        primitives.VerifyAll();
     }
 
     [Fact]
-    public async Task IsPlayerAdminRole_ReturnsFalse_WhenHolderDoesNotMatch()
+    public void IsGameStarted_ReturnsTrue_WhenMetadataStatusIsStarted()
     {
-        var primitives = new Mock<IPrimitives>(MockBehavior.Strict);
-        primitives.Setup(x => x.GetTokenHolderAsync(GameId, Policies.AdminRoleId)).ReturnsAsync("host-player");
+        var policies = new Policies(new Mock<IPrimitives>().Object);
+        var metadata = new GameMetadata("started", 2, [PlayerId], "player-1");
 
-        var policies = new Policies(primitives.Object);
-
-        var result = await policies.IsPlayerAdminRole(GameId, PlayerId);
-
-        result.Should().BeFalse();
-        primitives.VerifyAll();
-    }
-
-    [Fact]
-    public async Task IsPlayerAdminRole_ReturnsTrue_WhenHolderMatches()
-    {
-        var primitives = new Mock<IPrimitives>(MockBehavior.Strict);
-        primitives.Setup(x => x.GetTokenHolderAsync(GameId, Policies.AdminRoleId)).ReturnsAsync(PlayerId);
-
-        var policies = new Policies(primitives.Object);
-
-        var result = await policies.IsPlayerAdminRole(GameId, PlayerId);
+        var result = policies.IsGameStarted(metadata);
 
         result.Should().BeTrue();
-        primitives.VerifyAll();
     }
 
     [Fact]
-    public async Task IsActivePlayer_ReturnsFalse_WhenHolderDoesNotMatch()
+    public void IsPlayerSeated_ReturnsTrue_WhenPlayerInMetadataSeatList()
     {
-        var primitives = new Mock<IPrimitives>(MockBehavior.Strict);
-        primitives.Setup(x => x.GetTokenHolderAsync(GameId, Policies.ActivePlayerTokenId)).ReturnsAsync("player-2");
+        var policies = new Policies(new Mock<IPrimitives>().Object);
+        var metadata = new GameMetadata("created", 3, ["player-x", PlayerId], "player-1");
 
-        var policies = new Policies(primitives.Object);
-
-        var result = await policies.IsActivePlayer(GameId, PlayerId);
-
-        result.Should().BeFalse();
-        primitives.VerifyAll();
-    }
-
-    [Fact]
-    public async Task IsActivePlayer_ReturnsTrue_WhenHolderMatches()
-    {
-        var primitives = new Mock<IPrimitives>(MockBehavior.Strict);
-        primitives.Setup(x => x.GetTokenHolderAsync(GameId, Policies.ActivePlayerTokenId)).ReturnsAsync(PlayerId);
-
-        var policies = new Policies(primitives.Object);
-
-        var result = await policies.IsActivePlayer(GameId, PlayerId);
+        var result = policies.IsPlayerSeated(metadata, PlayerId);
 
         result.Should().BeTrue();
-        primitives.VerifyAll();
     }
 
     [Fact]
-    public async Task IsTurnActive_ReturnsFalse_WhenTurnHasNoHolder()
+    public void AreAllSeatsOccupied_ReturnsFalse_WhenSeatListSmallerThanCapacity()
     {
-        var primitives = new Mock<IPrimitives>(MockBehavior.Strict);
-        primitives.Setup(x => x.GetTokenHolderAsync(GameId, Policies.TurnTokenId)).ReturnsAsync((string?)null);
+        var policies = new Policies(new Mock<IPrimitives>().Object);
+        var metadata = new GameMetadata("created", 3, [PlayerId], "player-1");
 
-        var policies = new Policies(primitives.Object);
-
-        var result = await policies.IsTurnActive(GameId);
+        var result = policies.AreAllSeatsOccupied(metadata);
 
         result.Should().BeFalse();
-        primitives.VerifyAll();
     }
 
     [Fact]
-    public async Task IsTurnActive_ReturnsTrue_WhenTurnHasHolder()
+    public void IsPlayerAdminRole_ReturnsTrue_WhenAdminIdMatches()
     {
-        var primitives = new Mock<IPrimitives>(MockBehavior.Strict);
-        primitives.Setup(x => x.GetTokenHolderAsync(GameId, Policies.TurnTokenId)).ReturnsAsync(PlayerId);
+        var policies = new Policies(new Mock<IPrimitives>().Object);
+        var metadata = new GameMetadata("created", 2, [], PlayerId);
 
-        var policies = new Policies(primitives.Object);
-
-        var result = await policies.IsTurnActive(GameId);
+        var result = policies.IsPlayerAdminRole(metadata, PlayerId);
 
         result.Should().BeTrue();
-        primitives.VerifyAll();
     }
+
 }

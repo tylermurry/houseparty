@@ -17,12 +17,13 @@ public sealed class ExclusiveOperationsTests
 
     private readonly Mock<IPrimitives> _primitives = new(MockBehavior.Strict);
     private readonly Mock<IPolicies> _policies = new(MockBehavior.Strict);
+    private readonly Mock<IGameOperations> _gameOperations = new(MockBehavior.Strict);
     private readonly IExclusiveOperations _operations;
     private readonly OperationContext _context = new(GameId, PlayerId, Now);
 
     public ExclusiveOperationsTests()
     {
-        _operations = new ExclusiveOperations(_primitives.Object, _policies.Object);
+        _operations = new ExclusiveOperations(_primitives.Object, _policies.Object, _gameOperations.Object);
     }
 
     [Fact]
@@ -115,9 +116,11 @@ public sealed class ExclusiveOperationsTests
     [Fact]
     public async Task RevokeObjectControl_Fails_WhenCallerIsNotAdmin()
     {
+        var metadata = new GameMetadata("started", 2, [PlayerId], OtherPlayerId);
+        _gameOperations.Setup(x => x.GetMetadata(_context)).ReturnsAsync(metadata);
         _policies
-            .Setup(x => x.IsPlayerAdminRole(GameId, PlayerId))
-            .ReturnsAsync(false);
+            .Setup(x => x.IsPlayerAdminRole(metadata, PlayerId))
+            .Returns(false);
 
         var result = await _operations.RevokeObjectControl(_context, ObjectId);
 
@@ -128,9 +131,11 @@ public sealed class ExclusiveOperationsTests
     [Fact]
     public async Task RevokeObjectControl_Fails_WhenReleaseFails()
     {
+        var metadata = new GameMetadata("started", 2, [PlayerId], PlayerId);
+        _gameOperations.Setup(x => x.GetMetadata(_context)).ReturnsAsync(metadata);
         _policies
-            .Setup(x => x.IsPlayerAdminRole(GameId, PlayerId))
-            .ReturnsAsync(true);
+            .Setup(x => x.IsPlayerAdminRole(metadata, PlayerId))
+            .Returns(true);
         _primitives
             .Setup(x => x.ReleaseTokenAsync(GameId, ObjectId))
             .ReturnsAsync(false);
@@ -151,9 +156,11 @@ public sealed class ExclusiveOperationsTests
             Timestamp = Now
         };
 
+        var metadata = new GameMetadata("started", 2, [PlayerId], PlayerId);
+        _gameOperations.Setup(x => x.GetMetadata(_context)).ReturnsAsync(metadata);
         _policies
-            .Setup(x => x.IsPlayerAdminRole(GameId, PlayerId))
-            .ReturnsAsync(true);
+            .Setup(x => x.IsPlayerAdminRole(metadata, PlayerId))
+            .Returns(true);
         _primitives
             .Setup(x => x.ReleaseTokenAsync(GameId, ObjectId))
             .ReturnsAsync(true);
@@ -255,9 +262,11 @@ public sealed class ExclusiveOperationsTests
     [Fact]
     public async Task RevokeRoleAsync_Fails_WhenCallerIsNotAdmin()
     {
+        var metadata = new GameMetadata("started", 2, [PlayerId], OtherPlayerId);
+        _gameOperations.Setup(x => x.GetMetadata(_context)).ReturnsAsync(metadata);
         _policies
-            .Setup(x => x.IsPlayerAdminRole(GameId, PlayerId))
-            .ReturnsAsync(false);
+            .Setup(x => x.IsPlayerAdminRole(metadata, PlayerId))
+            .Returns(false);
 
         var result = await _operations.RevokeRoleAsync(_context, RoleId);
 
@@ -268,9 +277,11 @@ public sealed class ExclusiveOperationsTests
     [Fact]
     public async Task RevokeRoleAsync_Fails_WhenReleaseFails()
     {
+        var metadata = new GameMetadata("started", 2, [PlayerId], PlayerId);
+        _gameOperations.Setup(x => x.GetMetadata(_context)).ReturnsAsync(metadata);
         _policies
-            .Setup(x => x.IsPlayerAdminRole(GameId, PlayerId))
-            .ReturnsAsync(true);
+            .Setup(x => x.IsPlayerAdminRole(metadata, PlayerId))
+            .Returns(true);
         _primitives
             .Setup(x => x.ReleaseTokenAsync(GameId, RoleId))
             .ReturnsAsync(false);
@@ -291,9 +302,11 @@ public sealed class ExclusiveOperationsTests
             Timestamp = Now
         };
 
+        var metadata = new GameMetadata("started", 2, [PlayerId], PlayerId);
+        _gameOperations.Setup(x => x.GetMetadata(_context)).ReturnsAsync(metadata);
         _policies
-            .Setup(x => x.IsPlayerAdminRole(GameId, PlayerId))
-            .ReturnsAsync(true);
+            .Setup(x => x.IsPlayerAdminRole(metadata, PlayerId))
+            .Returns(true);
         _primitives
             .Setup(x => x.ReleaseTokenAsync(GameId, RoleId))
             .ReturnsAsync(true);
@@ -332,5 +345,7 @@ public sealed class ExclusiveOperationsTests
         _primitives.Reset();
         _policies.VerifyAll();
         _policies.Reset();
+        _gameOperations.VerifyAll();
+        _gameOperations.Reset();
     }
 }

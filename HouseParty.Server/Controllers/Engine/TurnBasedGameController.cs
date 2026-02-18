@@ -10,15 +10,47 @@ namespace HouseParty.Server.Controllers.Engine;
 [Route("api/engine/turn-based-game")]
 public sealed class TurnBasedGameController(ITurnBasedGame turnBasedGame, IRoomSignalRService signalR) : ControllerBase
 {
+    [HttpPost("create-game")]
+    public async Task<BaseGameExchanges.CreateGameResponse> CreateGame([FromBody] BaseGameExchanges.CreateGameRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var createGameResult = await turnBasedGame.CreateGame(request.PlayerId, request.SeatCount, Now());
+            await BroadcastAllEvents(createGameResult.GameId, createGameResult.Events, cancellationToken);
+
+            return new BaseGameExchanges.CreateGameResponse(true, createGameResult.GameId);
+        }
+        catch (Exception ex)
+        {
+            return new BaseGameExchanges.CreateGameResponse(false, null, ex.Message);
+        }
+    }
+
+    [HttpPost("join-game")]
+    public async Task<BaseGameExchanges.JoinGameResponse> JoinGame([FromBody] BaseGameExchanges.JoinGameRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var gameEvents = await turnBasedGame.JoinGame(new OperationContext(request.GameId, request.PlayerId, Now()));
+            await BroadcastAllEvents(request.GameId, gameEvents, cancellationToken);
+
+            return new BaseGameExchanges.JoinGameResponse(true);
+        }
+        catch (Exception ex)
+        {
+            return new BaseGameExchanges.JoinGameResponse(false, ex.Message);
+        }
+    }
+
     [HttpPost("start-game")]
     public async Task<BaseGameExchanges.StartGameResponse> StartGame([FromBody] BaseGameExchanges.StartGameRequest request, CancellationToken cancellationToken)
     {
         try
         {
-            var startGameResult = await turnBasedGame.StartGame(request.PlayerId, Now());
-            await BroadcastAllEvents(startGameResult.GameId, startGameResult.Events, cancellationToken);
+            var gameEvents = await turnBasedGame.StartGame(new OperationContext(request.GameId, request.PlayerId, Now()));
+            await BroadcastAllEvents(request.GameId, gameEvents, cancellationToken);
 
-            return new BaseGameExchanges.StartGameResponse(true, startGameResult.GameId);
+            return new BaseGameExchanges.StartGameResponse(true, request.GameId);
         }
         catch (Exception ex)
         {
@@ -26,19 +58,19 @@ public sealed class TurnBasedGameController(ITurnBasedGame turnBasedGame, IRoomS
         }
     }
 
-    [HttpPost("stop-game")]
-    public async Task<BaseGameExchanges.StopGameResponse> StopGame([FromBody] BaseGameExchanges.StopGameRequest request, CancellationToken cancellationToken)
+    [HttpPost("end-game")]
+    public async Task<BaseGameExchanges.EndGameResponse> EndGame([FromBody] BaseGameExchanges.EndGameRequest request, CancellationToken cancellationToken)
     {
         try
         {
-            var gameEvents = await turnBasedGame.StopGame(new OperationContext(request.GameId, request.PlayerId, Now()));
+            var gameEvents = await turnBasedGame.EndGame(new OperationContext(request.GameId, request.PlayerId, Now()));
             await BroadcastAllEvents(request.GameId, gameEvents, cancellationToken);
 
-            return new BaseGameExchanges.StopGameResponse(true);
+            return new BaseGameExchanges.EndGameResponse(true);
         }
         catch (Exception ex)
         {
-            return new BaseGameExchanges.StopGameResponse(false, ex.Message);
+            return new BaseGameExchanges.EndGameResponse(false, ex.Message);
         }
     }
 
