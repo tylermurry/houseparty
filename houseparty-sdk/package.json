@@ -13,21 +13,24 @@
     "gen:api": "openapi-ts -i ../HouseParty.Server/openapi/houseparty-server.json -o src/generated/client",
     "gen:events": "node scripts/gen-events.mjs",
     "gen:all": "npm run gen:api && npm run gen:events",
-    "prebuild": "npm run gen:all",
     "build": "tsup",
-    "pretype-check": "npm run gen:all",
     "type-check": "tsc --noEmit",
-    "pretest": "npm run gen:all",
-    "test": "vitest run"
+    "test": "vitest run",
+    "lint": "eslint . --fix --cache",
+    "validate": "run-s gen:all type-check lint test build"
   },
   "dependencies": {
     "@microsoft/signalr": "^8.0.7"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@hey-api/openapi-ts": "0.90.10",
+    "eslint": "^9.39.2",
     "tsup": "^8.5.0",
+    "typescript-eslint": "^8.46.1",
     "typescript": "~5.9.3",
-    "vitest": "^2.1.8"
+    "vitest": "^2.1.8",
+    "npm-run-all2": "^8.0.4"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
