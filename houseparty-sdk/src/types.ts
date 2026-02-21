@@ -9,6 +9,14 @@ export type PlayerSummary = {
   name: string
 }
 
+export type NormalizedMouseEvent = {
+  playerId: PlayerId
+  playerNumber: number
+  name: string
+  normalizedX: number
+  normalizedY: number
+}
+
 export type RoomEvent =
   | { type: 'playerRosterUpdated'; players: readonly PlayerSummary[] }
   | { type: 'mousePresenceUpdated'; payload: unknown }
@@ -27,6 +35,11 @@ export type HousePartyClientOptions<TState> = {
 
 export type JoinRoomOptions = {
   playerNumber?: number | null
+}
+
+export type JoinRoomResult<TState> = {
+  room: RoomHandle<TState>
+  player: PlayerHandle
 }
 
 export type ListenDisposer = () => void
@@ -63,6 +76,10 @@ export interface RoomHandle<TState> {
   readonly players: readonly PlayerSummary[]
 
   listenForEvents(cb: (event: RoomEvent) => void): ListenDisposer
+  useMousePresence(
+    player: PlayerHandle,
+    onNormalizedMouseEvent: (mouseEvent: NormalizedMouseEvent) => void,
+  ): ListenDisposer
   createTurnBasedGame(adminPlayer: PlayerHandle, seatCount: number): Promise<GameHandle<TState>>
   dispose(): Promise<void>
 }
@@ -73,5 +90,5 @@ export interface HousePartyClient<TState> {
     roomId: string,
     name: string,
     options?: JoinRoomOptions,
-  ): Promise<PlayerHandle>
+  ): Promise<JoinRoomResult<TState>>
 }

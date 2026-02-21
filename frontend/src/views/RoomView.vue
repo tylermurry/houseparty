@@ -41,9 +41,7 @@ const { visiblePresence, advancePresence } = useMousePresence({
   playerName,
   playerNumber,
   hasJoined,
-  isConnected,
   players,
-  connection,
 })
 
 const roomLink = computed(() => window.location.href)

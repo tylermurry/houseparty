@@ -2,6 +2,7 @@ import { HousePartyError } from '../errors'
 import type { GameEvent } from '../generated/events'
 import type {
   GameHandle,
+  NormalizedMouseEvent,
   ParseState,
   PlayerHandle,
   PlayerSummary,
@@ -15,10 +16,21 @@ import { GameHandleImpl } from './game'
 import { PlayerHandleImpl } from './player'
 import { parseGameEvent } from './gameEvents'
 import type { Trace } from '../trace'
+import {
+  MOUSE_SEND_INTERVAL_MS,
+  parseRawMousePresenceUpdate,
+  quantizeMousePosition,
+  toNormalizedMouseEvent,
+} from './mousePresence'
 
 type JoinContext = {
   name: string
   playerNumber: number
+}
+
+type MousePresenceSession = {
+  playerNumber: number
+  cb: (mouseEvent: NormalizedMouseEvent) => void
 }
 
 function toPlayerId(number: number): string {
@@ -38,6 +50,8 @@ export class RoomHandleImpl<TState> implements RoomHandle<TState> {
   private realtime: RealtimeTransport | null = null
   private activeGame: GameHandleImpl<TState> | null = null
   private readonly joinedGroups = new Set<string>()
+  private readonly mousePresenceSessions = new Set<MousePresenceSession>()
+  private readonly mousePresenceDisposers = new Set<() => void>()
 
   constructor(options: {
     id: string
@@ -57,6 +71,92 @@ export class RoomHandleImpl<TState> implements RoomHandle<TState> {
 
   listenForEvents(cb: (event: RoomEvent) => void): () => void {
     return this.roomEventEmitter.on(cb)
+  }
+
+  useMousePresence(
+    player: PlayerHandle,
+    onNormalizedMouseEvent: (mouseEvent: NormalizedMouseEvent) => void,
+  ): () => void {
+    if (!this.joinContext || !this.realtime) {
+      throw new HousePartyError('INVALID_STATE', 'Cannot use mouse presence before joining the room.')
+    }
+
+    if (this.joinContext.playerNumber !== player.number) {
+      throw new HousePartyError('INVALID_STATE', 'Mouse presence player does not match the joined room identity.')
+    }
+
+    if (typeof window === 'undefined') {
+      throw new HousePartyError('INVALID_STATE', 'Mouse presence requires a browser window context.')
+    }
+
+    let latestPointer: { x: number; y: number } | null = null
+    let lastSent: { x: number; y: number } | null = null
+    let timerId: number | null = null
+    const session: MousePresenceSession = {
+      playerNumber: player.number,
+      cb: onNormalizedMouseEvent,
+    }
+
+    const handlePointerMove = (event: PointerEvent) => {
+      latestPointer = { x: event.clientX, y: event.clientY }
+    }
+
+    const handlePointerLeave = () => {
+      latestPointer = null
+    }
+
+    const sendLatestPointer = async () => {
+      if (!latestPointer) {
+        return
+      }
+
+      const quantized = quantizeMousePosition(latestPointer, {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      })
+      if (!quantized) {
+        return
+      }
+
+      if (lastSent && lastSent.x === quantized.x && lastSent.y === quantized.y) {
+        return
+      }
+
+      lastSent = quantized
+
+      try {
+        await this.http.updateMousePresence(this.id, {
+          playerNumber: player.number,
+          name: player.name.trim().slice(0, 10),
+          x: quantized.x,
+          y: quantized.y,
+        })
+      } catch {
+        // Ignore transient mouse update failures.
+      }
+    }
+
+    const dispose = () => {
+      if (timerId !== null) {
+        window.clearInterval(timerId)
+        timerId = null
+      }
+
+      window.removeEventListener('pointermove', handlePointerMove)
+      window.removeEventListener('pointerleave', handlePointerLeave)
+      this.mousePresenceSessions.delete(session)
+      this.mousePresenceDisposers.delete(dispose)
+    }
+
+    this.mousePresenceSessions.add(session)
+    this.mousePresenceDisposers.add(dispose)
+    window.addEventListener('pointermove', handlePointerMove)
+    window.addEventListener('pointerleave', handlePointerLeave)
+    timerId = window.setInterval(() => {
+      void sendLatestPointer()
+    }, MOUSE_SEND_INTERVAL_MS)
+
+    return dispose
   }
 
   async join(name: string, requestedPlayerNumber: number | null): Promise<PlayerHandle> {
@@ -149,6 +249,12 @@ export class RoomHandleImpl<TState> implements RoomHandle<TState> {
       this.realtime = null
     }
 
+    for (const disposeMousePresence of [...this.mousePresenceDisposers]) {
+      disposeMousePresence()
+    }
+
+    this.mousePresenceSessions.clear()
+    this.mousePresenceDisposers.clear()
     this.roomEventEmitter.clear()
     this.joinedGroups.clear()
   }
@@ -195,6 +301,29 @@ export class RoomHandleImpl<TState> implements RoomHandle<TState> {
       onMousePresenceUpdated: (payload) => {
         this.trace.log('room', 'Received mouse presence update.', { roomId: this.id })
         this.roomEventEmitter.emit({ type: 'mousePresenceUpdated', payload })
+
+        const parsed = parseRawMousePresenceUpdate(payload)
+        if (!parsed) {
+          this.trace.traceOnly('room', 'Ignored unparseable mouse presence payload.', { roomId: this.id, payload })
+          return
+        }
+
+        const normalized = toNormalizedMouseEvent(parsed)
+        for (const session of this.mousePresenceSessions) {
+          if (session.playerNumber === normalized.playerNumber) {
+            continue
+          }
+
+          try {
+            session.cb(normalized)
+          } catch (error) {
+            this.trace.error('room', 'Mouse presence callback threw.', {
+              roomId: this.id,
+              playerNumber: normalized.playerNumber,
+              error,
+            })
+          }
+        }
       },
       onGameEvent: (payload) => {
         let parsed: GameEvent

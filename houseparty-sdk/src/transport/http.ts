@@ -10,6 +10,7 @@ import {
   postApiEngineTurnBasedGameEndGame,
   postApiRooms,
   postApiRoomsByRoomIdJoin,
+  postApiRoomsByRoomIdMouse,
   postApiSignalrNegotiate,
 } from '../generated/client'
 import type { RoomPlayer } from '../generated/client'
@@ -137,6 +138,24 @@ export class HttpTransport {
       this.trace.error('http', 'Create game failed.', { error })
       if (error instanceof HousePartyError) throw error
       mapError('GAME_COMMAND_REJECTED', 'Failed to create game.', error)
+    }
+  }
+
+  async updateMousePresence(
+    roomId: string,
+    payload: { playerNumber: number; name: string; x: number; y: number },
+  ): Promise<void> {
+    this.trace.traceOnly('http', 'POST /api/rooms/{roomId}/mouse', { roomId, payload })
+    try {
+      await postApiRoomsByRoomIdMouse({
+        client: this.client,
+        throwOnError: true,
+        path: { roomId },
+        body: payload,
+      })
+    } catch (error) {
+      this.trace.traceOnly('http', 'Mouse presence update failed.', { roomId, error })
+      mapError('NETWORK_ERROR', `Failed to update mouse presence for room '${roomId}'.`, error)
     }
   }
 
