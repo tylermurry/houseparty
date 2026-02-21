@@ -4,23 +4,20 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "gen:api": "openapi-ts -i ../HouseParty.Server/openapi/houseparty-server.json -o src/api-client/client",
     "format": "prettier --write --experimental-cli src/",
     "type-check": "vue-tsc --build",
     "lint": "eslint . --fix --cache",
-    "validate": "run-s gen:api lint type-check build",
+    "validate": "run-s lint type-check build",
     "dev": "vite",
     "build": "vite build"
   },
   "dependencies": {
     "@houseparty/sdk": "file:../houseparty-sdk",
-    "@microsoft/signalr": "^8.0.7",
     "pinia": "^3.0.4",
     "vue": "^3.5.26",
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "0.90.10",
     "@tsconfig/node24": "^24.0.4",
     "@types/node": "^24.10.9",
     "@vitejs/plugin-vue": "^6.0.3",

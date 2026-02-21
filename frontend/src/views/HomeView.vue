@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { createRoom as createRoomRequest } from '@/services/roomService'
+import { housepartyClient } from '@/services/housepartySdkService'
 
 const router = useRouter()
 const isBusy = ref(false)
@@ -16,14 +16,14 @@ async function createRoom() {
   let didNavigate = false
   try {
     isBusy.value = true
-    const room = await createRoomRequest()
-    if (!room.data?.id) {
+    const room = await housepartyClient.createRoom()
+    if (!room.id) {
       status.value = 'Failed to create room.'
       return
     }
     didNavigate = true
     await new Promise((resolve) => window.setTimeout(resolve, 300))
-    router.push({ path: `/room/${room.data.id}`, state: { fromCreate: true } })
+    router.push({ path: `/room/${room.id}`, state: { fromCreate: true } })
   } catch (error) {
     status.value = 'Failed to create room.'
     console.error(error)

@@ -3,43 +3,29 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import PlayerRoster from '@/components/PlayerRoster.vue'
 import { travelStarfieldDown } from '@/assets/scripts/starfield'
-import { useRoomConnection } from '@/composables/useRoomConnection'
-import { useRoomJoin } from '@/composables/useRoomJoin'
+import { useRoomSession } from '@/composables/useRoomSession'
 import { useMousePresence } from '@/composables/useMousePresence'
 import { useCopyLink } from '@/composables/useCopyLink'
 import { useGameCatalog } from '@/composables/useGameCatalog'
-import type { PlayerEntry } from '@/services/roomService'
 
 const route = useRoute()
 const roomId = computed(() => route.params.roomId?.toString() ?? '')
-const cameFromCreate = computed(() => window.history.state?.fromCreate === true)
 
 const playerName = ref('')
-const playerNumber = ref<number | null>(null)
-const hasJoined = ref(false)
-const players = ref<PlayerEntry[]>([])
-
-const { isJoining, joinError, joinRoom } = useRoomJoin({
-  roomId,
-  playerName,
+const {
+  room,
+  player,
   players,
-  playerNumber,
   hasJoined,
-})
-
-const { connection, isConnected, isConnecting, connectionError, startConnection } = useRoomConnection({
-  players,
-  onReconnected: async (connectionId) => {
-    if (hasJoined.value) {
-      await joinRoom(connectionId, playerNumber.value)
-    }
-  },
-})
+  isJoining,
+  joinError,
+  joinRoom,
+  dispose,
+} = useRoomSession(roomId)
 
 const { visiblePresence, advancePresence } = useMousePresence({
-  roomId,
-  playerName,
-  playerNumber,
+  room,
+  player,
   hasJoined,
   players,
 })
@@ -50,11 +36,10 @@ const { copyStatus, copyLink } = useCopyLink(roomLink)
 const { games, activeGame, selectGame } = useGameCatalog()
 
 const nameInputRef = ref<HTMLInputElement | null>(null)
-let namePromptTimer: number | null = null
 let presenceAnimationFrame: number | null = null
 let gameTransitionTimer: number | null = null
 let gameHoverTimer: number | null = null
-const showNamePrompt = ref(false)
+const showNamePrompt = computed(() => !hasJoined.value)
 const showSidebar = ref(false)
 const showGameList = ref(true)
 const showGameArea = ref(false)
@@ -77,11 +62,7 @@ const gameTitleLeaveDelayMs = computed(() => {
 })
 
 async function submitName() {
-  if (!connection.value || !isConnected.value || !connection.value.connectionId) {
-    joinError.value = 'Waiting for connection...'
-    return
-  }
-  await joinRoom(connection.value.connectionId)
+  await joinRoom(playerName.value)
 }
 
 function animatePresence() {
@@ -134,31 +115,13 @@ function handleGameSelect(gameId: string) {
 }
 
 onMounted(() => {
-  void startConnection()
   animatePresence()
 })
 
-watch([isConnected, hasJoined, showNamePrompt], async ([connected, joined, promptVisible]) => {
-  if (!connected || joined || !promptVisible) return
+watch([hasJoined, showNamePrompt], async ([joined, promptVisible]) => {
+  if (joined || !promptVisible) return
   await nextTick()
   nameInputRef.value?.focus()
-})
-
-watch([isConnected, hasJoined, cameFromCreate], ([connected, joined, fromCreate]) => {
-  if (namePromptTimer) {
-    window.clearTimeout(namePromptTimer)
-    namePromptTimer = null
-  }
-  if (connected && !joined) {
-    showNamePrompt.value = false
-    const delayMs = fromCreate ? 0 : 250
-    namePromptTimer = window.setTimeout(() => {
-      showNamePrompt.value = true
-      namePromptTimer = null
-    }, delayMs)
-  } else {
-    showNamePrompt.value = false
-  }
 })
 
 watch(hasJoined, (joined) => {
@@ -197,9 +160,6 @@ watch(showGameList, (visible) => {
 })
 
 onBeforeUnmount(() => {
-  if (namePromptTimer) {
-    window.clearTimeout(namePromptTimer)
-  }
   if (presenceAnimationFrame) {
     window.cancelAnimationFrame(presenceAnimationFrame)
     presenceAnimationFrame = null
@@ -212,16 +172,13 @@ onBeforeUnmount(() => {
     window.clearTimeout(gameHoverTimer)
     gameHoverTimer = null
   }
+  void dispose()
 })
 </script>
 
 <template>
   <main class="room-shell" :style="animationVars">
     <header class="room-header">
-      <section class="room-status">
-        <p v-if="isConnecting" class="hint">Connecting to room...</p>
-        <p v-else-if="connectionError" class="hint error">{{ connectionError }}</p>
-      </section>
       <Transition name="sidebar-fly">
         <div v-if="showSidebar" class="copy-link" :style="animationVars">
           <button class="primary" @click="copyLink">Copy Link</button>
@@ -298,7 +255,7 @@ onBeforeUnmount(() => {
     </section>
 
     <Transition name="name-dialog">
-      <div v-if="isConnected && !hasJoined && showNamePrompt" class="name-overlay">
+      <div v-if="!hasJoined && showNamePrompt" class="name-overlay">
         <form class="name-card" autocomplete="off" @submit.prevent="submitName">
           <div class="name-title">Enter your name</div>
           <input

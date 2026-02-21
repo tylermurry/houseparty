@@ -1,11 +1,10 @@
 import { computed, onBeforeUnmount, ref, watch, type Ref } from 'vue'
-import { createHousePartyClient, type NormalizedMouseEvent, type RoomHandle, type PlayerHandle } from '@houseparty/sdk'
-import type { PlayerEntry } from '@/services/roomService'
+import type { NormalizedMouseEvent, PlayerHandle, RoomHandle } from '@houseparty/sdk'
+import type { PlayerEntry } from '@/types/player'
 
 type UseMousePresenceOptions = {
-  roomId: Ref<string>
-  playerName: Ref<string>
-  playerNumber: Ref<number | null>
+  room: Ref<RoomHandle<unknown> | null>
+  player: Ref<PlayerHandle | null>
   hasJoined: Ref<boolean>
   players: Ref<PlayerEntry[]>
 }
@@ -22,17 +21,13 @@ export function useMousePresence(options: UseMousePresenceOptions) {
       targetY: number
     }>
   >([])
-  const sdkClient = createHousePartyClient({
-    baseUrl: import.meta.env.VITE_BACKEND_API_URL ?? '',
-  })
   let mousePresenceDisposer: (() => void) | null = null
-  let mousePresenceRoom: RoomHandle<unknown> | null = null
 
   const playerNameMap = computed(
     () => new Map(options.players.value.map((player) => [player.number, player.name])),
   )
   const visiblePresence = computed(() =>
-    presenceList.value.filter((presence) => presence.playerNumber !== options.playerNumber.value),
+    presenceList.value.filter((presence) => presence.playerNumber !== options.player.value?.number),
   )
 
   function playerColor(number: number) {
@@ -66,43 +61,23 @@ export function useMousePresence(options: UseMousePresenceOptions) {
     existing.targetY = targetY
   }
 
-  function disposeMousePresenceRoom() {
+  function disposeMousePresenceListener() {
     if (mousePresenceDisposer) {
       mousePresenceDisposer()
       mousePresenceDisposer = null
     }
-
-    if (mousePresenceRoom) {
-      void mousePresenceRoom.dispose()
-      mousePresenceRoom = null
-    }
   }
 
-  async function startSdkMousePresenceSession(playerNumber: number) {
-    const trimmedName = options.playerName.value.trim().slice(0, 10)
-    const roomId = options.roomId.value
+  watch([options.hasJoined, options.room, options.player], ([joined, room, player]) => {
+    disposeMousePresenceListener()
 
-    if (!trimmedName || !roomId) {
+    if (!joined || !room || !player) {
       return
     }
 
-    const joinResult = await sdkClient.joinRoom(roomId, trimmedName, { playerNumber })
-    const room = joinResult.room as RoomHandle<unknown>
-    const player = joinResult.player as PlayerHandle
-    mousePresenceRoom = room
     mousePresenceDisposer = room.useMousePresence(player, (mouseEvent) => {
       upsertPresence(mouseEvent)
     })
-  }
-
-  watch([options.hasJoined, options.playerNumber], ([joined, playerNumber]) => {
-    disposeMousePresenceRoom()
-
-    if (!joined || playerNumber === null) {
-      return
-    }
-
-    void startSdkMousePresenceSession(playerNumber)
   })
 
   function advancePresence() {
@@ -128,7 +103,7 @@ export function useMousePresence(options: UseMousePresenceOptions) {
   )
 
   onBeforeUnmount(() => {
-    disposeMousePresenceRoom()
+    disposeMousePresenceListener()
   })
 
   return {
