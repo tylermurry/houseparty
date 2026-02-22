@@ -32,7 +32,7 @@ builder.Services.AddSingleton<ITurnBasedGame, TurnBasedGame>();
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("frontend", policy =>
+    options.AddPolicy("houseparty-frontend", policy =>
     {
         if (!builder.Environment.IsDevelopment()) return;
         policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
@@ -41,7 +41,7 @@ builder.Services.AddCors(options =>
 
 // Serverless SignalR Setup
 builder.Services.AddSingleton<IServiceManager>(_ =>
-    (IServiceManager) new ServiceManagerBuilder()
+    (IServiceManager)new ServiceManagerBuilder()
         .WithOptions(options => options.ConnectionString = builder.Configuration.GetConnectionString("signalr"))
         .BuildServiceManager()
     );
@@ -49,7 +49,7 @@ builder.Services.AddSingleton<IServiceManager>(_ =>
 var app = builder.Build();
 
 app.UseExceptionHandler();
-app.UseCors("frontend");
+app.UseCors("houseparty-frontend");
 app.UseWebSockets();
 
 if (app.Environment.IsDevelopment())

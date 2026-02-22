@@ -49,7 +49,7 @@ public class TurnBasedGame(
             throw new Exception("Could not set active player");
         }
 
-        return [..controlTurnResult.Events, ..activePlayerResult.Events];
+        return [.. controlTurnResult.Events, .. activePlayerResult.Events];
     }
 
     public async Task<(List<GameEvent> Events, string StatePayload)> EndTurn(OperationContext context, string statePayload)
@@ -87,7 +87,7 @@ public class TurnBasedGame(
         if (!eventsCleared)
             throw new Exception("Failed to clear events");
 
-        return ([..releaseActivePlayerResult.Events, ..releaseTurnResult.Events], savedState.Data);
+        return ([.. releaseActivePlayerResult.Events, .. releaseTurnResult.Events], savedState.Data);
     }
 
     public async Task<List<GameEvent>> MakeMove(OperationContext context, string move)
@@ -111,6 +111,6 @@ public class TurnBasedGame(
         // the SubmitAction call is exactly what we need.
         var makeMoveEvent = await contestedOperations.SubmitAction(context, move);
 
-        return [..makeMoveEvent.Events];
+        return [.. makeMoveEvent.Events];
     }
 }

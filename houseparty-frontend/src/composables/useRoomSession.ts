@@ -1,6 +1,6 @@
 import { onBeforeUnmount, ref, type Ref } from 'vue'
-import type { PlayerHandle, PlayerSummary, RoomHandle } from '@houseparty/sdk'
-import { housepartyClient } from '@/services/housepartySdkService'
+import type { PlayerHandle, PlayerSummary, RoomHandle } from '@houseparty/client'
+import { housepartyClient } from '@/services/housepartyClientService'
 import type { PlayerEntry } from '@/types/player'
 
 export type RoomSession = {

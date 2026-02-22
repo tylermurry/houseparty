@@ -1,5 +1,5 @@
 import { computed, onBeforeUnmount, ref, watch, type Ref } from 'vue'
-import type { NormalizedMouseEvent, PlayerHandle, RoomHandle } from '@houseparty/sdk'
+import type { NormalizedMouseEvent, PlayerHandle, RoomHandle } from '@houseparty/client'
 import type { PlayerEntry } from '@/types/player'
 
 type UseMousePresenceOptions = {

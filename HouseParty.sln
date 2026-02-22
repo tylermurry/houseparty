@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HouseParty.AppHost", "House
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HouseParty.Server", "HouseParty.Server\HouseParty.Server.csproj", "{613A57CF-6484-4373-A6D1-8B376FA5F90A}"
 EndProject
-Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "frontend", "frontend\frontend.esproj", "{B86E16DE-0BD1-4D07-9427-B352BBDE5C11}"
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "houseparty-frontend", "houseparty-frontend\houseparty-frontend.esproj", "{B86E16DE-0BD1-4D07-9427-B352BBDE5C11}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseParty.GameEngine", "HouseParty.GameEngine\HouseParty.GameEngine.csproj", "{870734CB-ED0E-49E5-AB67-2AF6DA7CA992}"
 EndProject
@@ -19,7 +19,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{AE0CC333
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Backend", "Backend", "{0211E538-DB51-458E-8F8D-2E9C226FEE96}"
 EndProject
-Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "houseparty-sdk", "houseparty-sdk\houseparty-sdk.esproj", "{EC020389-B4EB-413C-8BB1-F2C76913607A}"
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "houseparty-client", "houseparty-client\houseparty-client.esproj", "{EC020389-B4EB-413C-8BB1-F2C76913607A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HouseParty.E2E", "HouseParty.E2E\HouseParty.E2E.csproj", "{EDC95AF7-F27A-4EDA-87B7-E1ACAA50912E}"
 EndProject

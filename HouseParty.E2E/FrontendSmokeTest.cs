@@ -20,11 +20,11 @@ public class FrontendSmokeTests(ITestOutputHelper testOutputHelper)
 
         using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(2));
         await app.ResourceNotifications.WaitForResourceHealthyAsync("backend", timeout.Token);
-        await app.ResourceNotifications.WaitForResourceHealthyAsync("frontend", timeout.Token);
+        await app.ResourceNotifications.WaitForResourceHealthyAsync("houseparty-frontend", timeout.Token);
 
         testOutputHelper.WriteLine("Running tests...");
 
-        using var frontendClient = app.CreateHttpClient("frontend");
+        using var frontendClient = app.CreateHttpClient("houseparty-frontend");
         var homeUrl = frontendClient.BaseAddress ?? throw new InvalidOperationException("Frontend URL was not available.");
 
         using var playwright = await Playwright.CreateAsync();

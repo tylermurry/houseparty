@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { housepartyClient } from '@/services/housepartySdkService'
+import { housepartyClient } from '@/services/housepartyClientService'
 
 const router = useRouter()
 const isBusy = ref(false)

@@ -1,0 +1,15 @@
+{
+  "name": "houseparty-monorepo",
+  "private": true,
+  "scripts": {
+    "dotnet-build": "dotnet build HouseParty.sln --nologo",
+    "dotnet-lint": "dotnet format HouseParty.sln --verify-no-changes --verbosity minimal",
+    "dotnet-lint:fix": "dotnet format HouseParty.sln --verbosity minimal",
+    "dotnet-test": "dotnet test HouseParty.GameEngine.Tests/HouseParty.GameEngine.Tests.csproj --nologo && dotnet test HouseParty.Server.Tests/HouseParty.Server.Tests.csproj --nologo",
+    "dotnet-validate": "npm run dotnet-build && npm run dotnet-lint && npm run dotnet-test",
+    "client-validate": "npm --prefix houseparty-client run validate",
+    "frontend-validate": "npm --prefix houseparty-frontend run validate",
+    "docs-validate": "npm --prefix houseparty-docs run validate",
+    "validate": "npm run dotnet-validate && npm run client-validate && npm run frontend-validate && npm run docs-validate"
+  }
+}

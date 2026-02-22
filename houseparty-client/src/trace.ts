@@ -71,7 +71,7 @@ export class Trace {
 }
 
 const defaultTraceLogger: TraceLogger = ({ severity, scope, message, data }) => {
-  const prefix = `[houseparty-sdk:${scope}]`
+  const prefix = `[houseparty-client:${scope}]`
 
   if (severity === 'error') {
     if (data === undefined) {

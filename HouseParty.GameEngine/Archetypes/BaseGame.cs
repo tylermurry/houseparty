@@ -130,13 +130,9 @@ public class BaseGame(
         if (!policies.IsPlayerAdminRole(metadata, context.PlayerId))
             throw new Exception("Only admin can stop game");
 
-        if (! await gameOperations.ClearGame(context))
+        if (!await gameOperations.ClearGame(context))
             throw new Exception("Failed to clear game data");
 
-        return [new GameEndedEvent
-        {
-            PlayerId = context.PlayerId,
-            Timestamp = context.Now
-        }];
+        return [];
     }
 }

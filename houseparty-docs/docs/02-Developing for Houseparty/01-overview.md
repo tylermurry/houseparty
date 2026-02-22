@@ -18,7 +18,7 @@ It is responsible for managing the coordination of game sessions, enforcing poli
 ### /HouseParty.GameEngine
 This project contains the core game engine used by HouseParty.
 
-### /houseparty-sdk
+### /houseparty-client
 This project is the SDK for interacting with the houseparty server. It aims to abstract the difficult parts away so that developers can focus on building their game and let house party handle the coordination.
 
 ### /frontend

@@ -18,7 +18,7 @@ var backend = builder.AddProject<Projects.HouseParty_Server>("backend")
     .WithHttpHealthCheck("/health")
     .WithExternalHttpEndpoints();
 
-var frontend = builder.AddViteApp("frontend", "../frontend")
+var frontend = builder.AddViteApp("houseparty-frontend", "../houseparty-frontend")
     .WithReference(backend)
     .WithEnvironment("VITE_BACKEND_API_URL", backend.GetEndpoint("http"))
     .WaitFor(backend);
