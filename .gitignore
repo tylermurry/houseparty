@@ -1,7 +1,8 @@
 /.idea/**
 /.tools/**
-/frontend/obj/**
-/frontend/.eslintcache
+/houseparty-frontend/obj\\Debug/**
+/houseparty-frontend/obj/**
+/houseparty-frontend/.eslintcache
 /HouseParty.AppHost/obj/**
 /HouseParty.AppHost/bin/**
 /HouseParty.Server/obj/**
@@ -16,9 +17,13 @@
 /HouseParty.E2E/obj/**
 /houseparty-docs/build/**
 /houseparty-docs/node_modules/**
+/houseparty-docs/obj\\Debug/**
 /houseparty-docs/obj/**
 /houseparty-docs/.docusaurus
-/houseparty-sdk/dist/**
-/houseparty-sdk/node_modules/**
-/houseparty-sdk/obj/**
+/houseparty-client/dist/**
+/houseparty-client/node_modules/**
+/houseparty-client/obj\\Debug/**
+/houseparty-client/obj/**
 HouseParty.sln.DotSettings.user
+HouseParty.Server/ScratchPad.md
+.aspire/settings.json
