@@ -122,7 +122,7 @@ watch([hasJoined, showNamePrompt], async ([joined, promptVisible]) => {
   if (joined || !promptVisible) return
   await nextTick()
   nameInputRef.value?.focus()
-})
+}, { immediate: true })
 
 watch(hasJoined, (joined) => {
   if (joined) {
