@@ -24,6 +24,8 @@ export type {
   JoinRoomOptions,
   JoinRoomResult,
   ListenDisposer,
+  MousePosition,
+  MousePresenceHandle,
   NormalizedMouseEvent,
   PlayerHandle,
   PlayerSummary,

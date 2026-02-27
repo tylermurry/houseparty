@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import PlayerRoster from '@/components/PlayerRoster.vue'
 import { travelStarfieldDown } from '@/assets/scripts/starfield'
@@ -14,7 +14,6 @@ const roomId = computed(() => route.params.roomId?.toString() ?? '')
 const playerName = ref('')
 const {
   room,
-  player,
   players,
   hasJoined,
   isJoining,
@@ -23,9 +22,8 @@ const {
   dispose,
 } = useRoomSession(roomId)
 
-const { visiblePresence, advancePresence } = useMousePresence({
+const { visiblePresence } = useMousePresence({
   room,
-  player,
   hasJoined,
   players,
 })
@@ -36,7 +34,6 @@ const { copyStatus, copyLink } = useCopyLink(roomLink)
 const { games, activeGame, selectGame } = useGameCatalog()
 
 const nameInputRef = ref<HTMLInputElement | null>(null)
-let presenceAnimationFrame: number | null = null
 let gameTransitionTimer: number | null = null
 let gameHoverTimer: number | null = null
 const showNamePrompt = computed(() => !hasJoined.value)
@@ -63,11 +60,6 @@ const gameTitleLeaveDelayMs = computed(() => {
 
 async function submitName() {
   await joinRoom(playerName.value)
-}
-
-function animatePresence() {
-  advancePresence()
-  presenceAnimationFrame = window.requestAnimationFrame(animatePresence)
 }
 
 function getGameDelay(index: number) {
@@ -114,10 +106,6 @@ function handleGameSelect(gameId: string) {
   }, gameAreaRevealMs)
 }
 
-onMounted(() => {
-  animatePresence()
-})
-
 watch([hasJoined, showNamePrompt], async ([joined, promptVisible]) => {
   if (joined || !promptVisible) return
   await nextTick()
@@ -160,10 +148,6 @@ watch(showGameList, (visible) => {
 })
 
 onBeforeUnmount(() => {
-  if (presenceAnimationFrame) {
-    window.cancelAnimationFrame(presenceAnimationFrame)
-    presenceAnimationFrame = null
-  }
   if (gameTransitionTimer) {
     window.clearTimeout(gameTransitionTimer)
     gameTransitionTimer = null
@@ -284,8 +268,8 @@ onBeforeUnmount(() => {
         :key="presence.playerNumber"
         class="presence-cursor"
         :style="{
-          left: `${presence.currentX * 100}%`,
-          top: `${presence.currentY * 100}%`,
+          left: `${presence.x}px`,
+          top: `${presence.y}px`,
         }"
       >
         <div class="presence-pointer"></div>
@@ -411,6 +395,7 @@ onBeforeUnmount(() => {
 .presence-cursor {
   position: absolute;
   transform: translate(-50%, -50%);
+  transition: left 80ms linear, top 80ms linear;
   display: grid;
   justify-items: center;
   gap: 6px;

@@ -4,7 +4,6 @@ import type { Trace } from '../trace'
 
 export type RealtimeHandlers = {
   onPlayerRosterUpdated: (players: unknown) => void
-  onMousePresenceUpdated: (payload: unknown) => void
   onGameEvent: (payload: unknown) => void
   onGameStateSnapshot: (payload: unknown) => void
   onReconnected: (connectionId: string) => Promise<void> | void
@@ -30,7 +29,6 @@ export class RealtimeTransport {
       .build()
 
     this.hub.on('playerRosterUpdated', handlers.onPlayerRosterUpdated)
-    this.hub.on('mousePresenceUpdated', handlers.onMousePresenceUpdated)
     this.hub.on('gameEvent', handlers.onGameEvent)
     this.hub.on('gameStateSnapshot', handlers.onGameStateSnapshot)
 
@@ -79,5 +77,12 @@ export class RealtimeTransport {
   async stop(): Promise<void> {
     this.trace.log('realtime', 'Stopping SignalR connection.')
     await this.hub.stop()
+  }
+
+  on(eventName: string, handler: (payload: unknown) => void): () => void {
+    this.hub.on(eventName, handler)
+    return () => {
+      this.hub.off(eventName, handler)
+    }
   }
 }
