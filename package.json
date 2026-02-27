@@ -7,9 +7,17 @@
     "dotnet-lint:fix": "dotnet format HouseParty.sln --verbosity minimal",
     "dotnet-test": "dotnet test HouseParty.GameEngine.Tests/HouseParty.GameEngine.Tests.csproj --nologo && dotnet test HouseParty.Server.Tests/HouseParty.Server.Tests.csproj --nologo",
     "dotnet-validate": "npm run dotnet-build && npm run dotnet-lint && npm run dotnet-test",
+
+    "client-build": "npm --prefix houseparty-client run build",
     "client-validate": "npm --prefix houseparty-client run validate",
+
+    "frontend-build": "npm --prefix houseparty-frontend run build",
     "frontend-validate": "npm --prefix houseparty-frontend run validate",
+
+    "docs-build": "npm --prefix houseparty-docs run build",
     "docs-validate": "npm --prefix houseparty-docs run validate",
+
+    "build": "npm run dotnet-build && npm run client-build && npm run docs-build && npm run frontend-build",
     "validate": "npm run dotnet-validate && npm run client-validate && npm run frontend-validate && npm run docs-validate"
   }
 }
