@@ -7,7 +7,12 @@ The AGENT.md file and documentation are essential to maintain well as they influ
 
 As such, great care should be taken to maintain high quality within this codebase. **AI-slop will not be tolerated.**
 
-## Overview
+## High-Level Layer Responsibilities
+
+HouseParty is split into clear layers with explicit ownership:
+- Frontend: Owns user experience, route-level UI, and view orchestration.
+- Client: Owns transport abstraction (HTTP + realtime), connection lifecycle, and typed client operations.
+- Backend API: Owns authoritative coordination, authorization, and canonical room/game state transitions.
 
 ## Repo Overview
 
@@ -21,8 +26,8 @@ This project contains the core game engine used by HouseParty.
 ### /houseparty-client
 This project is the SDK for interacting with the houseparty server. It aims to abstract the difficult parts away so that developers can focus on building their game and let house party handle the coordination.
 
-### /frontend
-This is the frontend for the 
+### /houseparty-frontend
+This is the web frontend used by room participants to create/join rooms, create/join games, and play/spectate in realtime.
 
 ### /HouseParty.E2E
 
